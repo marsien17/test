@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Лотерея Сансары</title>
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: #0f1117;
+      --card-bg: #1a1d26;
+      --card-border: #282d3c;
+      --text-main: #f0f3f8;
+      --text-muted: #8b949e;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --gold: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Карточки */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Заголовки */
+    h1 { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    p { font-size: 14px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Шкалы параметров */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: #2a2e3d;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .fill-health { background: var(--danger); }
+    .fill-wealth { background: var(--gold); }
+    .fill-intellect { background: #3b82f6; }
+    .fill-karma { background: var(--accent); }
+
+    /* Кнопки */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+      background: var(--accent-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+    }
+
+    .btn-danger { background: var(--danger); }
+
+    /* Распределение энергии */
+    .energy-pool {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .allocation-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .alloc-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* Выборы событий */
+    .choices-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .choice-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      padding: 12px;
+      border-radius: 10px;
+      color: var(--text-main);
+      text-align: left;
+      font-size: 13px;
+      cursor: pointer;
+      line-height: 1.3;
+    }
+
+    .choice-btn:active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent);
+    }
+
+    /* Лог событий */
+    .log-box {
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 4px;
+    }
+
+    .log-entry {
+      border-left: 2px solid var(--accent);
+      padding-left: 6px;
+    }
+
+    /* Беджи редкости */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 6px;
+    }
+    .badge-common { background: #374151; color: #d1d5db; }
+    .badge-rare { background: #1e3a8a; color: #93c5fd; }
+    .badge-mythic { background: #701a75; color: #f472b6; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- ЭКРАН 1: Рождение -->
+  <div id="screen-birth" class="card" style="text-align: center; margin: auto 0;">
+    <div style="font-size: 48px; margin-bottom: 12px;">☸️</div>
+    <h1>Лотерея Сансары</h1>
+    <p style="margin-bottom: 24px;">Каждая жизнь — уникальный билет судьбы. Проживи жизнь достойно и накопи карму для высших перерождений.</p>
+    <div style="margin-bottom: 20px;">
+      <span style="font-size: 13px; color: var(--text-muted);">Твой текущий ранг души:</span>
+      <h3 style="color: var(--gold); margin-top: 4px;" id="soul-rank">Странник (0 Карма)</h3>
+    </div>
+    <button class="btn" onclick="startRebirth()">🎲 Родиться в новом теле</button>
+  </div>
+
+  <!-- ЭКРАН 2: Игровой процесс -->
+  <div id="screen-game" style="display: none; flex-direction: column; flex-grow: 1;">
+    <!-- Паспорт текущего персонажа -->
+    <div class="card" style="padding: 12px 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <span style="font-size: 13px; font-weight: 700;" id="char-name">Имя</span>
+        <span style="font-size: 12px; color: var(--gold);" id="char-age">16 лет</span>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted);" id="char-origin">Страна, Статус</div>
+      <div style="font-size: 12px; margin-top: 4px;" id="char-perk">Особенность: —</div>
+    </div>
+
+    <!-- Параметры персонажа -->
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-header"><span>❤️ Здоровье</span><span id="val-health">100%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-health" id="bar-health" style="width: 100%;"></div></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-header"><span>💰 Капитал</span><span id="val-wealth">$500</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-wealth" id="bar-wealth" style="width: 20%;"></div></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-header"><span>🧠 Разум</span><span id="val-intellect">50%</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-intellect" id="bar-intellect" style="width: 50%;"></div></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-header"><span>☯️ Карма</span><span id="val-karma">0</span></div>
+        <div class="progress-bar"><div class="progress-fill fill-karma" id="bar-karma" style="width: 50%;"></div></div>
+      </div>
+    </div>
+
+    <!-- Окно событий или распределения времени -->
+    <div class="card" id="interaction-card" style="flex-grow: 1;">
+      <!-- Контент переключается JS -->
+    </div>
+
+    <!-- Журнал хроники -->
+    <div class="card" style="padding: 10px 14px;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">ХРОНИКА ЖИЗНИ:</div>
+      <div class="log-box" id="life-log"></div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 3: Итог жизни / Смерть -->
+  <div id="screen-death" class="card" style="display: none; text-align: center; margin: auto 0;">
+    <div style="font-size: 40px; margin-bottom: 8px;">📜</div>
+    <h2>Книга Перерождений</h2>
+    <p id="death-cause" style="color: var(--danger); font-weight: 600; margin-bottom: 12px;">Вы покинули этот мир в возрасте 64 лет</p>
+    
+    <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: left; font-size: 13px;">
+      <div style="margin-bottom: 4px;">👤 <span id="summary-identity">Имя</span></div>
+      <div style="margin-bottom: 4px;">⭐ Главное достижение: <span id="summary-feat" style="color: var(--gold);">—</span></div>
+      <div style="margin-bottom: 4px;">☯️ Заработано кармы: <span id="summary-karma">+0</span></div>
+      <div>🧬 Всего перерождений: <span id="summary-cycles">1</span></div>
+    </div>
+
+    <button class="btn" style="margin-bottom: 8px;" onclick="shareResult()">Поделиться в Telegram</button>
+    <button class="btn btn-outline" onclick="returnToSanctuary()">Вернуться в Сансару</button>
+  </div>
+</div>
+
+<script>
+  // Инициализация Telegram WebApp
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  // Утилита вибрации (Haptic Feedback)
+  function haptic(type = 'impact', style = 'light') {
+    if (!tg?.HapticFeedback) return;
+    if (type === 'impact') tg.HapticFeedback.impactOccurred(style);
+    if (type === 'notification') tg.HapticFeedback.notificationOccurred(style);
+  }
+
+  // Постоянный прогресс игрока (Local Storage)
+  let playerMeta = JSON.parse(localStorage.getItem('samsara_meta')) || {
+    totalKarma: 0,
+    reincarnations: 0,
+    rank: 'Странник'
+  };
+
+  // База данных стран и стартовых условий
+  const origins = [
+    { country: 'Монако', class: 'Семья банкиров', wealth: 50000, desc: 'Роскошные апартаменты и частные школы.' },
+    { country: 'Япония', class: 'Средний класс', wealth: 5000, desc: 'Дисциплина, высокие ожидания родителей.' },
+    { country: 'Бразилия', class: 'Фавелы Рио', wealth: 200, desc: 'Уличные законы, борьба за выживание с малых лет.' },
+    { country: 'Индия', class: 'Потомственные ремесленники', wealth: 600, desc: 'Вековые традиции и семейное дело.' },
+    { country: 'Норвегия', class: 'Семья экологов', wealth: 12000, desc: 'Стабильность, чистый воздух и свобода выбора.' },
+    { country: 'Казахстан', class: 'Степной аул', wealth: 1000, desc: 'Крепкая семья, уважение к старшим и простор.' }
+  ];
+
+  const perks = [
+    { name: 'Абсолютная память', rarity: 'rare', badge: 'badge-rare', stat: 'intellect', bonus: 20 },
+    { name: 'Крепкий иммунитет', rarity: 'common', badge: 'badge-common', stat: 'health', bonus: 15 },
+    { name: 'Золотая ложка', rarity: 'rare', badge: 'badge-rare', stat: 'wealth', bonus: 10000 },
+    { name: 'Магнетизм души', rarity: 'mythic', badge: 'badge-mythic', stat: 'karma', bonus: 25 },
+    { name: 'Обычный ребенок', rarity: 'common', badge: 'badge-common', stat: 'none', bonus: 0 }
+  ];
+
+  const firstNames = ['Марк', 'Айдар', 'Кэндзи', 'Лукас', 'Алексей', 'Матео', 'Арья', 'София', 'Юки', 'Елена'];
+
+  // Игровой стейт
+  let life = null;
+
+  // Пул сюжетных развилок по возрастам
+  const lifeEvents = [
+    {
+      minAge: 14, maxAge: 18,
+      title: 'Уличный конфликт',
+      text: 'Ваш школьный приятель предлагает спрятать у себя сверток с подозрительным содержимым за $300.',
+      choices: [
+        { text: 'Согласиться ради легких денег', effect: { wealth: 300, karma: -15, health: -5 }, log: 'Ввязался в криминал в юности.' },
+        { text: 'Отказаться и отговорить друга', effect: { karma: 10, intellect: 5 }, log: 'Проявил принципиальность.' },
+        { text: 'Сдать его директору школы', effect: { karma: -5, intellect: 5 }, log: 'Выбрал безопасность ценой дружбы.' }
+      ]
+    },
+    {
+      minAge: 19, maxAge: 25,
+      title: 'Карьерный перекресток',
+      text: 'Вам предлагают перспективную работу в серой финансовой конторе с огромной зарплатой или честную практику за гроши.',
+      choices: [
+        { text: 'Идти за деньгами в серую контору', effect: { wealth: 5000, karma: -20, intellect: 10 }, log: 'Стал зарабатывать на мутных схемах.' },
+        { text: 'Выбрать честную практику в институте', effect: { wealth: 300, karma: 15, intellect: 25 }, log: 'Посвятил молодость фундаментальным знаниям.' }
+      ]
+    },
+    {
+      minAge: 26, maxAge: 38,
+      title: 'Крушение компании',
+      text: 'На вашем предприятии кризис. Можно подделать отчетность и спасти фирму, подставив коллегу.',
+      choices: [
+        { text: 'Подделать аудит и спасти свои деньги', effect: { wealth: 8000, karma: -30, health: -10 }, log: 'Спас капитал предательством.' },
+        { text: 'Принять банкротство с честным именем', effect: { wealth: -4000, karma: 25, health: 5 }, log: 'Потерял всё, но сохранил честь.' }
+      ]
+    },
+    {
+      minAge: 40, maxAge: 65,
+      title: 'Зов меценатства',
+      text: 'В вашем регионе экологическое бедствие. Местным жителям нужна помощь.',
+      choices: [
+        { text: 'Пожертвовать половину накоплений больнице', effect: { wealthRatio: 0.5, karma: 40 }, log: 'Стал благотворителем года.' },
+        { text: 'Игнорировать и вложить всё в золото', effect: { wealth: 15000, karma: -10 }, log: 'Предпочел личную безопасность чужому горю.' }
+      ]
+    }
+  ];
+
+  function updateSoulDisplay() {
+    document.getElementById('soul-rank').innerText = `${playerMeta.rank} (${playerMeta.totalKarma} Кармы)`;
+  }
+  updateSoulDisplay();
+
+  // Старт новой жизни
+  function startRebirth() {
+    haptic('impact', 'medium');
+    const origin = origins[Math.floor(Math.random() * origins.length)];
+    const perk = perks[Math.floor(Math.random() * perks.length)];
+    const name = firstNames[Math.floor(Math.random() * firstNames.length)];
+
+    life = {
+      name: name,
+      age: 14,
+      origin: origin,
+      perk: perk,
+      health: 90 + (perk.stat === 'health' ? perk.bonus : 0),
+      wealth: origin.wealth + (perk.stat === 'wealth' ? perk.bonus : 0),
+      intellect: 50 + (perk.stat === 'intellect' ? perk.bonus : 0),
+      karma: perk.stat === 'karma' ? perk.bonus : 0,
+      energy: 100,
+      alloc: { work: 40, study: 30, rest: 30 },
+      isAlive: true,
+      majorFeat: 'Обычная жизнь'
+    };
+
+    document.getElementById('char-name').innerText = life.name;
+    document.getElementById('char-origin').innerText = `${life.origin.country} · ${life.origin.class}`;
+    document.getElementById('char-perk').innerHTML = `Дар: <strong>${life.perk.name}</strong> <span class="badge ${life.perk.badge}">${life.perk.rarity}</span>`;
+
+    document.getElementById('screen-birth').style.display = 'none';
+    document.getElementById('screen-death').style.display = 'none';
+    document.getElementById('screen-game').style.display = 'flex';
+
+    document.getElementById('life-log').innerHTML = '';
+    addLog(`Родился в стране ${life.origin.country}. ${life.origin.desc}`);
+
+    updateStats();
+    renderPlanningPhase();
+  }
+
+  function updateStats() {
+    document.getElementById('char-age').innerText = `${life.age} лет`;
+    document.getElementById('val-health').innerText = `${Math.max(0, life.health)}%`;
+    document.getElementById('bar-health').style.width = `${Math.max(0, Math.min(100, life.health))}%`;
+
+    document.getElementById('val-wealth').innerText = `$${life.wealth.toLocaleString()}`;
+    const wealthPercent = Math.min(100, (life.wealth / 50000) * 100);
+    document.getElementById('bar-wealth').style.width = `${wealthPercent}%`;
+
+    document.getElementById('val-intellect').innerText = `${Math.min(100, life.intellect)}%`;
+    document.getElementById('bar-intellect').style.width = `${Math.min(100, life.intellect)}%`;
+
+    document.getElementById('val-karma').innerText = life.karma;
+    const karmaPercent = Math.max(0, Math.min(100, (life.karma + 50)));
+    document.getElementById('bar-karma').style.width = `${karmaPercent}%`;
+  }
+
+  function addLog(text) {
+    const logBox = document.getElementById('life-log');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerText = `[${life.age} лет] ${text}`;
+    logBox.prepend(entry);
+  }
+
+  // Фаза 1: Распределение энергии
+  function renderPlanningPhase() {
+    const card = document.getElementById('interaction-card');
+    card.innerHTML = `
+      <h3>Этап: ${life.age}–${life.age + 4} лет</h3>
+      <p style="margin-bottom: 12px;">Распределите силы на следующие 4 года жизни:</p>
+      
+      <div class="allocation-row">
+        <span>💼 Карьера / Доход</span>
+        <div class="alloc-controls">
+          <button class="btn-circle" onclick="adjustAlloc('work', -10)">-</button>
+          <span style="width: 32px; text-align: center;" id="alloc-work">${life.alloc.work}%</span>
+          <button class="btn-circle" onclick="adjustAlloc('work', 10)">+</button>
+        </div>
+      </div>
+
+      <div class="allocation-row">
+        <span>🧠 Учёба / Навыки</span>
+        <div class="alloc-controls">
+          <button class="btn-circle" onclick="adjustAlloc('study', -10)">-</button>
+          <span style="width: 32px; text-align: center;" id="alloc-study">${life.alloc.study}%</span>
+          <button class="btn-circle" onclick="adjustAlloc('study', 10)">+</button>
+        </div>
+      </div>
+
+      <div class="allocation-row">
+        <span>❤️ Отдых / Здоровье</span>
+        <div class="alloc-controls">
+          <button class="btn-circle" onclick="adjustAlloc('rest', -10)">-</button>
+          <span style="width: 32px; text-align: center;" id="alloc-rest">${life.alloc.rest}%</span>
+          <button class="btn-circle" onclick="adjustAlloc('rest', 10)">+</button>
+        </div>
+      </div>
+
+      <div class="energy-pool" id="alloc-warning">Баланс: 100%</div>
+      <button class="btn" onclick="commitYears()">Прожить эти годы ➔</button>
+    `;
+  }
+
+  function adjustAlloc(field, delta) {
+    haptic('impact', 'light');
+    const totalWithout = Object.keys(life.alloc).reduce((acc, k) => k !== field ? acc + life.alloc[k] : acc, 0);
+    const target = life.alloc[field] + delta;
+    if (target >= 0 && totalWithout + target <= 100) {
+      life.alloc[field] = target;
+      document.getElementById(`alloc-${field}`).innerText = `${target}%`;
+      const sum = totalWithout + target;
+      const warn = document.getElementById('alloc-warning');
+      warn.innerText = `Сумма: ${sum}% / 100%`;
+      warn.style.color = sum === 100 ? 'var(--success)' : 'var(--danger)';
+    }
+  }
+
+  // Расчет последствий периода
+  function commitYears() {
+    const total = life.alloc.work + life.alloc.study + life.alloc.rest;
+    if (total !== 100) {
+      haptic('notification', 'warning');
+      alert('Распределите ровно 100% времени!');
+      return;
+    }
+    haptic('impact', 'medium');
+
+    // Экономический и физический эффект
+    const earned = Math.round((life.alloc.work * 45) * (life.intellect / 50));
+    life.wealth += earned;
+    life.intellect += Math.round(life.alloc.study * 0.15);
+    
+    // Влияние на здоровье (переработка вредит)
+    const healthDelta = (life.alloc.rest * 0.3) - (life.alloc.work * 0.2);
+    life.health = Math.min(100, Math.round(life.health + healthDelta));
+
+    addLog(`За 4 года заработано $${earned}, здоровье: ${life.health}%.`);
+    life.age += 4;
+    updateStats();
+
+    // Проверка на случайное происшествие или смерть
+    if (life.health <= 0 || (life.age > 60 && Math.random() < (life.age - 55) * 0.03)) {
+      endLife('Смерть от слабого здоровья и старости.');
+      return;
+    }
+
+    // Триггер сюжетного выбора
+    checkEventTrigger();
+  }
+
+  function checkEventTrigger() {
+    const available = lifeEvents.filter(e => life.age >= e.minAge && life.age <= e.maxAge);
+    if (available.length > 0 && Math.random() < 0.75) {
+      const ev = available[Math.floor(Math.random() * available.length)];
+      renderEvent(ev);
+    } else {
+      renderPlanningPhase();
+    }
+  }
+
+  function renderEvent(ev) {
+    const card = document.getElementById('interaction-card');
+    let buttonsHtml = ev.choices.map((c, idx) => `
+      <button class="choice-btn" onclick="resolveChoice(${idx}, ${JSON.stringify(ev.choices).replace(/"/g, '&quot;')})">
+        ${c.text}
+      </button>
+    `).join('');
+
+    card.innerHTML = `
+      <h3>${ev.title}</h3>
+      <p style="margin-bottom: 8px;">${ev.text}</p>
+      <div class="choices-list">${buttonsHtml}</div>
+    `;
+  }
+
+  function resolveChoice(index, choices) {
+    haptic('impact', 'medium');
+    const c = choices[index];
+    if (c.effect.wealth) life.wealth += c.effect.wealth;
+    if (c.effect.wealthRatio) life.wealth = Math.round(life.wealth * c.effect.wealthRatio);
+    if (c.effect.health) life.health += c.effect.health;
+    if (c.effect.intellect) life.intellect += c.effect.intellect;
+    if (c.effect.karma) life.karma += c.effect.karma;
+
+    addLog(c.log);
+    updateStats();
+
+    if (life.karma > 30) life.majorFeat = 'Служитель общества';
+    if (life.wealth > 80000) life.majorFeat = 'Капиталист';
+    if (life.intellect > 85) life.majorFeat = 'Великий ученый';
+
+    if (life.health <= 0) {
+      endLife('Погиб от трагических последствий своего выбора.');
+      return;
+    }
+
+    renderPlanningPhase();
+  }
+
+  // Финал жизни
+  function endLife(reason) {
+    haptic('notification', 'error');
+    playerMeta.reincarnations += 1;
+    playerMeta.totalKarma += life.karma;
+
+    // Расчет ранга души
+    if (playerMeta.totalKarma >= 100) playerMeta.rank = 'Просветленный';
+    else if (playerMeta.totalKarma >= 50) playerMeta.rank = 'Мудрец';
+    else if (playerMeta.totalKarma >= 20) playerMeta.rank = 'Искатель';
+    else playerMeta.rank = 'Странник';
+
+    localStorage.setItem('samsara_meta', JSON.stringify(playerMeta));
+
+    document.getElementById('screen-game').style.display = 'none';
+    document.getElementById('screen-death').style.display = 'block';
+
+    document.getElementById('death-cause').innerText = `${reason} Возраст: ${life.age} лет.`;
+    document.getElementById('summary-identity').innerText = `${life.name} (${life.origin.country})`;
+    document.getElementById('summary-feat').innerText = life.majorFeat;
+    document.getElementById('summary-karma').innerText = `${life.karma > 0 ? '+' : ''}${life.karma}`;
+    document.getElementById('summary-cycles').innerText = playerMeta.reincarnations;
+  }
+
+  function returnToSanctuary() {
+    haptic('impact', 'light');
+    updateSoulDisplay();
+    document.getElementById('screen-death').style.display = 'none';
+    document.getElementById('screen-birth').style.display = 'block';
+  }
+
+  function shareResult() {
+    const text = `В «Лотерее Сансары» я прожил жизнь гражданина ${life.origin.country} (${life.name}), достиг статуса «${life.majorFeat}» и закончил путь в ${life.age} лет с кармой ${life.karma}!`;
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/your_bot_name&text=${encodeURIComponent(text)}`);
+    } else {
+      navigator.clipboard?.writeText(text);
+      alert('Результат скопирован в буфер обмена!');
+    }
+  }
+</script>
+</body>
+</html>
