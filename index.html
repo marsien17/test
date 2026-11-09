@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Лотерея Сансары</title>
-  <!-- Telegram WebApp SDK -->
+  <title>Жизнь RP — Симулятор Судьбы</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-color: #0f1117;
-      --card-bg: #1a1d26;
-      --card-border: #282d3c;
-      --text-main: #f0f3f8;
-      --text-muted: #8b949e;
-      --accent: #6366f1;
-      --accent-hover: #4f46e5;
+      --bg: #0b0d13;
+      --card: #151924;
+      --card-light: #1e2433;
+      --border: #2a3246;
+      --text: #f3f4f6;
+      --muted: #8b95a5;
+      --accent: #3b82f6;
       --gold: #f59e0b;
-      --danger: #ef4444;
-      --success: #10b981;
+      --green: #10b981;
+      --red: #ef4444;
+      --purple: #8b5cf6;
     }
 
     * {
@@ -26,614 +26,1197 @@
       -webkit-tap-highlight-color: transparent;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
+    .app-wrap {
+      max-width: 500px;
       width: 100%;
-      flex-grow: 1;
+      margin: 0 auto;
       display: flex;
       flex-direction: column;
+      height: 100vh;
+      padding: 10px;
     }
 
-    /* Карточки */
+    /* Карточки и скролл */
     .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
     }
 
-    /* Заголовки */
-    h1 { font-size: 24px; font-weight: 800; text-align: center; margin-bottom: 8px; }
-    h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
-    h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-    p { font-size: 14px; color: var(--text-muted); line-height: 1.4; }
-
-    /* Шкалы параметров */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 2px;
+      margin-bottom: 8px;
     }
 
-    .stat-item {
-      background: rgba(255, 255, 255, 0.03);
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Верхняя панель времени и возраста */
+    .top-bar {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
     }
 
-    .stat-header {
+    .top-row {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
-      margin-bottom: 4px;
+      align-items: center;
+      margin-bottom: 6px;
     }
 
-    .progress-bar {
-      height: 6px;
-      background: #2a2e3d;
-      border-radius: 3px;
+    .char-badge {
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .balance-box {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--green);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Таймер года и кнопки скорости */
+    .time-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .year-bar-bg {
+      flex: 1;
+      height: 8px;
+      background: #23293a;
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .year-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--purple));
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .speed-btn {
+      background: var(--card-light);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 7px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .speed-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Показатели (Здоровье, Бодрость, Ум, Авторитет) */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .stat-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+
+    .stat-pill-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+
+    .mini-bar {
+      height: 4px;
+      background: #252b3d;
+      border-radius: 2px;
       overflow: hidden;
     }
 
-    .progress-fill {
-      height: 100%;
-      border-radius: 3px;
-      transition: width 0.3s ease;
+    .mini-fill { height: 100%; transition: width 0.2s; }
+
+    /* Список элементов во вкладках */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 10px 0 6px 2px;
+      letter-spacing: 0.5px;
     }
 
-    .fill-health { background: var(--danger); }
-    .fill-wealth { background: var(--gold); }
-    .fill-intellect { background: #3b82f6; }
-    .fill-karma { background: var(--accent); }
-
-    /* Кнопки */
-    .btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      color: white;
-      border: none;
+    .action-item {
+      background: var(--card-light);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-      background: var(--accent-hover);
-    }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-    }
-
-    .btn-danger { background: var(--danger); }
-
-    /* Распределение энергии */
-    .energy-pool {
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 12px;
-      color: var(--gold);
-      font-weight: 600;
-    }
-
-    .allocation-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding: 10px 12px;
       margin-bottom: 8px;
-      background: rgba(255, 255, 255, 0.02);
-      padding: 6px 10px;
-      border-radius: 8px;
-    }
-
-    .alloc-controls {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .btn-circle {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 1px solid var(--card-border);
-      background: var(--card-bg);
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      cursor: pointer;
+    .action-info h4 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 2px;
     }
 
-    /* Выборы событий */
-    .choices-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 14px;
-    }
-
-    .choice-btn {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--card-border);
-      padding: 12px;
-      border-radius: 10px;
-      color: var(--text-main);
-      text-align: left;
-      font-size: 13px;
-      cursor: pointer;
+    .action-info p {
+      font-size: 11px;
+      color: var(--muted);
       line-height: 1.3;
     }
 
-    .choice-btn:active {
-      background: rgba(99, 102, 241, 0.15);
-      border-color: var(--accent);
-    }
-
-    /* Лог событий */
-    .log-box {
-      max-height: 120px;
-      overflow-y: auto;
+    .act-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
       font-size: 12px;
-      color: var(--text-muted);
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 4px;
-    }
-
-    .log-entry {
-      border-left: 2px solid var(--accent);
-      padding-left: 6px;
-    }
-
-    /* Беджи редкости */
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
       font-weight: 700;
-      text-transform: uppercase;
-      margin-left: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
-    .badge-common { background: #374151; color: #d1d5db; }
-    .badge-rare { background: #1e3a8a; color: #93c5fd; }
-    .badge-mythic { background: #701a75; color: #f472b6; }
+
+    .act-btn:active { transform: scale(0.96); }
+    .act-btn:disabled { background: #2c3347; color: #687285; cursor: not-allowed; }
+    .act-btn.green { background: var(--green); }
+    .act-btn.gold { background: var(--gold); color: #000; }
+    .act-btn.red { background: var(--red); }
+
+    /* Лог событий внизу */
+    .log-strip {
+      background: #10131c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      height: 58px;
+      overflow-y: auto;
+      font-size: 11px;
+      margin-bottom: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    /* Нижнее меню навигации (5 вкладок) */
+    .bottom-nav {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 8px 2px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+    }
+
+    .nav-btn span.icon { font-size: 16px; }
+    .nav-btn.active {
+      background: var(--card-light);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* Стартовый экран выбора времени */
+    .time-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0 20px;
+    }
+
+    .preset-btn {
+      background: var(--card-light);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .preset-btn.selected {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: var(--accent);
+      color: #60a5fa;
+    }
+
+    .big-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* Модальное окно случайных событий */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .modal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      max-width: 420px;
+      width: 100%;
+    }
+
+    .modal-choice {
+      width: 100%;
+      text-align: left;
+      background: var(--card-light);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 10px;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <!-- ЭКРАН 1: Рождение -->
-  <div id="screen-birth" class="card" style="text-align: center; margin: auto 0;">
-    <div style="font-size: 48px; margin-bottom: 12px;">☸️</div>
-    <h1>Лотерея Сансары</h1>
-    <p style="margin-bottom: 24px;">Каждая жизнь — уникальный билет судьбы. Проживи жизнь достойно и накопи карму для высших перерождений.</p>
-    <div style="margin-bottom: 20px;">
-      <span style="font-size: 13px; color: var(--text-muted);">Твой текущий ранг души:</span>
-      <h3 style="color: var(--gold); margin-top: 4px;" id="soul-rank">Странник (0 Карма)</h3>
+<div class="app-wrap">
+  <!-- ЭКРАН 1: НАСТРОЙКА ПЕРЕД РОЖДЕНИЕМ -->
+  <div id="screen-start" class="card" style="margin: auto 0; text-align: center; padding: 20px;">
+    <div style="font-size: 46px; margin-bottom: 8px;">🏙️</div>
+    <h1 style="font-size: 22px; margin-bottom: 6px;">Жизнь RP: Симулятор Судьбы</h1>
+    <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+      Ты рождаешься в случайном городе и семье с разным достатком. Поднимись с низов, покупай тачки, открывай бизнесы или стань криминальным авторитетом.
+    </p>
+
+    <div style="background: var(--card-light); padding: 10px; border-radius: 10px; margin-bottom: 16px; font-size: 13px;">
+      🧬 Прожито жизней: <b id="meta-lives">0</b> · 🏆 Рекорд капитала: <b id="meta-record" style="color: var(--gold);">0 ₽</b>
     </div>
-    <button class="btn" onclick="startRebirth()">🎲 Родиться в новом теле</button>
+
+    <div style="text-align: left; font-size: 13px; font-weight: 700;">⏱ Длительность 1 года жизни (1x):</div>
+    <div class="time-preset-grid" id="time-presets">
+      <button class="preset-btn" onclick="selectYearDuration(1, this)">1 сек</button>
+      <button class="preset-btn" onclick="selectYearDuration(3, this)">3 сек</button>
+      <button class="preset-btn selected" onclick="selectYearDuration(5, this)">5 сек</button>
+      <button class="preset-btn" onclick="selectYearDuration(15, this)">15 сек</button>
+      <button class="preset-btn" onclick="selectYearDuration(30, this)">30 сек</button>
+      <button class="preset-btn" onclick="selectYearDuration(60, this)">1 мин (60с)</button>
+    </div>
+
+    <button class="big-btn" onclick="startNewLife()">🎲 Родиться в случайной семье</button>
   </div>
 
-  <!-- ЭКРАН 2: Игровой процесс -->
-  <div id="screen-game" style="display: none; flex-direction: column; flex-grow: 1;">
-    <!-- Паспорт текущего персонажа -->
-    <div class="card" style="padding: 12px 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <span style="font-size: 13px; font-weight: 700;" id="char-name">Имя</span>
-        <span style="font-size: 12px; color: var(--gold);" id="char-age">16 лет</span>
+  <!-- ЭКРАН 2: ОСНОВНАЯ ИГРА -->
+  <div id="screen-game" style="display: none; flex-direction: column; height: 100%;">
+    <!-- Верхняя шапка -->
+    <div class="top-bar">
+      <div class="top-row">
+        <div>
+          <div class="char-badge">
+            <span id="ui-name">Александр</span>
+            <span style="color: var(--gold);" id="ui-age">0 лет</span>
+            <span id="ui-wanted" style="color: var(--red); font-size: 12px;"></span>
+          </div>
+          <div style="font-size: 11px; color: var(--muted);" id="ui-status">Младенец · Семья: Средний класс</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="balance-box" id="ui-money">0 ₽</div>
+          <div style="font-size: 10px; color: var(--muted); margin-top: 2px;" id="ui-income">+0 ₽ / год</div>
+        </div>
       </div>
-      <div style="font-size: 12px; color: var(--text-muted);" id="char-origin">Страна, Статус</div>
-      <div style="font-size: 12px; margin-top: 4px;" id="char-perk">Особенность: —</div>
+
+      <!-- Прогресс года + Управление скоростью -->
+      <div class="time-controls">
+        <span style="font-size: 10px; color: var(--muted); width: 48px;" id="ui-timer-label">Год: 0%</span>
+        <div class="year-bar-bg">
+          <div class="year-bar-fill" id="ui-year-bar"></div>
+        </div>
+        <button class="speed-btn" id="spd-0" onclick="setSpeed(0)">⏸</button>
+        <button class="speed-btn" id="spd-0.5" onclick="setSpeed(0.5)">x0.5</button>
+        <button class="speed-btn active" id="spd-1" onclick="setSpeed(1)">x1</button>
+        <button class="speed-btn" id="spd-2" onclick="setSpeed(2)">x2</button>
+        <button class="speed-btn" id="spd-5" onclick="setSpeed(5)">x5</button>
+      </div>
     </div>
 
-    <!-- Параметры персонажа -->
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-header"><span>❤️ Здоровье</span><span id="val-health">100%</span></div>
-        <div class="progress-bar"><div class="progress-fill fill-health" id="bar-health" style="width: 100%;"></div></div>
+    <!-- 4 шкалы характеристик -->
+    <div class="stats-bar">
+      <div class="stat-pill">
+        <div class="stat-pill-head"><span>❤️ Здор</span><span id="st-hp">100</span></div>
+        <div class="mini-bar"><div class="mini-fill" id="bar-hp" style="background: var(--red); width: 100%;"></div></div>
       </div>
-      <div class="stat-item">
-        <div class="stat-header"><span>💰 Капитал</span><span id="val-wealth">$500</span></div>
-        <div class="progress-bar"><div class="progress-fill fill-wealth" id="bar-wealth" style="width: 20%;"></div></div>
+      <div class="stat-pill">
+        <div class="stat-pill-head"><span>⚡ Бодр</span><span id="st-en">100</span></div>
+        <div class="mini-bar"><div class="mini-fill" id="bar-en" style="background: var(--gold); width: 100%;"></div></div>
       </div>
-      <div class="stat-item">
-        <div class="stat-header"><span>🧠 Разум</span><span id="val-intellect">50%</span></div>
-        <div class="progress-bar"><div class="progress-fill fill-intellect" id="bar-intellect" style="width: 50%;"></div></div>
+      <div class="stat-pill">
+        <div class="stat-pill-head"><span>🧠 Ум</span><span id="st-iq">10</span></div>
+        <div class="mini-bar"><div class="mini-fill" id="bar-iq" style="background: var(--accent); width: 10%;"></div></div>
       </div>
-      <div class="stat-item">
-        <div class="stat-header"><span>☯️ Карма</span><span id="val-karma">0</span></div>
-        <div class="progress-bar"><div class="progress-fill fill-karma" id="bar-karma" style="width: 50%;"></div></div>
+      <div class="stat-pill">
+        <div class="stat-pill-head"><span>😎 Авт</span><span id="st-rep">0</span></div>
+        <div class="mini-bar"><div class="mini-fill" id="bar-rep" style="background: var(--purple); width: 5%;"></div></div>
       </div>
     </div>
 
-    <!-- Окно событий или распределения времени -->
-    <div class="card" id="interaction-card" style="flex-grow: 1;">
-      <!-- Контент переключается JS -->
-    </div>
+    <!-- Прокручиваемая область контента активной вкладки -->
+    <div class="scroll-area" id="tab-content"></div>
 
-    <!-- Журнал хроники -->
-    <div class="card" style="padding: 10px 14px;">
-      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">ХРОНИКА ЖИЗНИ:</div>
-      <div class="log-box" id="life-log"></div>
+    <!-- Живая хроника (Лог) -->
+    <div class="log-strip" id="game-log"></div>
+
+    <!-- Нижнее меню вкладок -->
+    <div class="bottom-nav">
+      <button class="nav-btn active" id="nav-actions" onclick="switchTab('actions')">
+        <span class="icon">⚡</span>Занятия
+      </button>
+      <button class="nav-btn" id="nav-work" onclick="switchTab('work')">
+        <span class="icon">💼</span>Работа
+      </button>
+      <button class="nav-btn" id="nav-shop" onclick="switchTab('shop')">
+        <span class="icon">🚗</span>Магазин
+      </button>
+      <button class="nav-btn" id="nav-crime" onclick="switchTab('crime')">
+        <span class="icon">🔫</span>Криминал
+      </button>
+      <button class="nav-btn" id="nav-profile" onclick="switchTab('profile')">
+        <span class="icon">🎒</span>Семья/Имущ
+      </button>
     </div>
   </div>
 
-  <!-- ЭКРАН 3: Итог жизни / Смерть -->
-  <div id="screen-death" class="card" style="display: none; text-align: center; margin: auto 0;">
-    <div style="font-size: 40px; margin-bottom: 8px;">📜</div>
-    <h2>Книга Перерождений</h2>
-    <p id="death-cause" style="color: var(--danger); font-weight: 600; margin-bottom: 12px;">Вы покинули этот мир в возрасте 64 лет</p>
-    
-    <div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: left; font-size: 13px;">
-      <div style="margin-bottom: 4px;">👤 <span id="summary-identity">Имя</span></div>
-      <div style="margin-bottom: 4px;">⭐ Главное достижение: <span id="summary-feat" style="color: var(--gold);">—</span></div>
-      <div style="margin-bottom: 4px;">☯️ Заработано кармы: <span id="summary-karma">+0</span></div>
-      <div>🧬 Всего перерождений: <span id="summary-cycles">1</span></div>
+  <!-- ЭКРАН 3: ИТОГ ЖИЗНИ -->
+  <div id="screen-end" class="card" style="display: none; margin: auto 0; text-align: center; padding: 20px;">
+    <div style="font-size: 44px; margin-bottom: 6px;">🪦</div>
+    <h2 style="margin-bottom: 6px;">Жизнь подошла к концу</h2>
+    <p id="end-reason" style="color: var(--red); font-size: 13px; font-weight: 700; margin-bottom: 14px;"></p>
+
+    <div style="background: var(--card-light); border-radius: 12px; padding: 14px; text-align: left; font-size: 13px; margin-bottom: 16px; line-height: 1.7;">
+      <div>👤 Имя: <b id="end-name"></b></div>
+      <div>🏠 Семья при рождении: <b id="end-family"></b></div>
+      <div>⏳ Прожито лет: <b id="end-age"></b></div>
+      <div>💰 Итоговый капитал: <b id="end-money" style="color: var(--green);"></b></div>
+      <div>🚗 Машин и квартир: <b id="end-assets"></b></div>
+      <div>😎 Авторитет в городе: <b id="end-rep"></b></div>
     </div>
 
-    <button class="btn" style="margin-bottom: 8px;" onclick="shareResult()">Поделиться в Telegram</button>
-    <button class="btn btn-outline" onclick="returnToSanctuary()">Вернуться в Сансару</button>
+    <button class="big-btn" onclick="backToMenu()">🔄 Начать новую жизнь</button>
+  </div>
+</div>
+
+<!-- Модальное окно случайных событий года -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal-card">
+    <div style="font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 4px;">🔔 СОБЫТИЕ ГОДА</div>
+    <h3 id="ev-title" style="font-size: 17px; margin-bottom: 6px;">Заголовок</h3>
+    <p id="ev-desc" style="font-size: 13px; color: var(--muted); margin-bottom: 10px;"></p>
+    <div id="ev-choices"></div>
   </div>
 </div>
 
 <script>
-  // Инициализация Telegram WebApp
   const tg = window.Telegram?.WebApp;
-  if (tg) {
-    tg.ready();
-    tg.expand();
+  if (tg) { tg.ready(); tg.expand(); }
+
+  function haptic(style = 'light') {
+    if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
   }
 
-  // Утилита вибрации (Haptic Feedback)
-  function haptic(type = 'impact', style = 'light') {
-    if (!tg?.HapticFeedback) return;
-    if (type === 'impact') tg.HapticFeedback.impactOccurred(style);
-    if (type === 'notification') tg.HapticFeedback.notificationOccurred(style);
+  // Сохранение рекордов
+  let meta = JSON.parse(localStorage.getItem('crmp_life_meta')) || { lives: 0, recordMoney: 0 };
+  function updateMetaUI() {
+    document.getElementById('meta-lives').innerText = meta.lives;
+    document.getElementById('meta-record').innerText = meta.recordMoney.toLocaleString() + ' ₽';
+  }
+  updateMetaUI();
+
+  // Настройки времени
+  let baseYearSeconds = 5; // По умолчанию 1 год = 5 секунд
+  let speedMultiplier = 1; // x1, x2, x0.5, 0 (пауза)
+  let savedSpeedBeforeModal = 1;
+  let activeTab = 'actions';
+  let loopInterval = null;
+
+  function selectYearDuration(sec, btn) {
+    haptic('light');
+    baseYearSeconds = sec;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
   }
 
-  // Постоянный прогресс игрока (Local Storage)
-  let playerMeta = JSON.parse(localStorage.getItem('samsara_meta')) || {
-    totalKarma: 0,
-    reincarnations: 0,
-    rank: 'Странник'
-  };
-
-  // База данных стран и стартовых условий
-  const origins = [
-    { country: 'Монако', class: 'Семья банкиров', wealth: 50000, desc: 'Роскошные апартаменты и частные школы.' },
-    { country: 'Япония', class: 'Средний класс', wealth: 5000, desc: 'Дисциплина, высокие ожидания родителей.' },
-    { country: 'Бразилия', class: 'Фавелы Рио', wealth: 200, desc: 'Уличные законы, борьба за выживание с малых лет.' },
-    { country: 'Индия', class: 'Потомственные ремесленники', wealth: 600, desc: 'Вековые традиции и семейное дело.' },
-    { country: 'Норвегия', class: 'Семья экологов', wealth: 12000, desc: 'Стабильность, чистый воздух и свобода выбора.' },
-    { country: 'Казахстан', class: 'Степной аул', wealth: 1000, desc: 'Крепкая семья, уважение к старшим и простор.' }
+  // Справочники: Семьи, Работы, Авто, Недвижимость, Бизнесы, Криминал
+  const familyTypes = [
+    { type: 'Бедная семья с окраины', city: 'Нижний Тагил', startMoney: 100, allowance: 150, parentWealth: 'Бедные', rel: 70 },
+    { type: 'Обычная рабочая семья', city: 'Самара', startMoney: 1000, allowance: 600, parentWealth: 'Средний достаток', rel: 85 },
+    { type: 'Семья врачей и инженеров', city: 'Екатеринбург', startMoney: 3500, allowance: 1500, parentWealth: 'Обеспеченные', rel: 90 },
+    { type: 'Семья бизнесмена', city: 'Казань', startMoney: 25000, allowance: 8000, parentWealth: 'Богатые', rel: 75 },
+    { type: 'Семья олигарха с Рублевки', city: 'Москва', startMoney: 250000, allowance: 50000, parentWealth: 'Миллионеры', rel: 60 }
   ];
 
-  const perks = [
-    { name: 'Абсолютная память', rarity: 'rare', badge: 'badge-rare', stat: 'intellect', bonus: 20 },
-    { name: 'Крепкий иммунитет', rarity: 'common', badge: 'badge-common', stat: 'health', bonus: 15 },
-    { name: 'Золотая ложка', rarity: 'rare', badge: 'badge-rare', stat: 'wealth', bonus: 10000 },
-    { name: 'Магнетизм души', rarity: 'mythic', badge: 'badge-mythic', stat: 'karma', bonus: 25 },
-    { name: 'Обычный ребенок', rarity: 'common', badge: 'badge-common', stat: 'none', bonus: 0 }
+  const namesList = ['Артем', 'Александр', 'Максим', 'Даниил', 'Дмитрий', 'Кирилл', 'Роман', 'Сергей', 'Илья', 'Тимур'];
+
+  const jobsCatalog = [
+    { id: 'flier', name: 'Промоутер (Листовки)', minAge: 12, reqIq: 0, reqCar: false, salary: 18000, desc: 'Подработка для школьников после уроков' },
+    { id: 'courier', name: 'Вело-курьер доставки', minAge: 16, reqIq: 10, reqCar: false, salary: 45000, desc: 'Развоз заказов по району в любую погоду' },
+    { id: 'loader', name: 'Грузчик на складе', minAge: 18, reqIq: 10, reqCar: false, salary: 65000, desc: 'Тяжелый физический труд, но стабильно' },
+    { id: 'taxi', name: 'Водитель Такси', minAge: 18, reqIq: 20, reqCar: true, salary: 120000, desc: 'Требуется личный автомобиль в гараже' },
+    { id: 'mechanic', name: 'Автомеханик в СТО', minAge: 18, reqIq: 35, reqCar: false, salary: 150000, desc: 'Ремонт двигателей и тюнинг авто' },
+    { id: 'manager', name: 'Менеджер по продажам', minAge: 20, reqIq: 50, reqCar: false, salary: 240000, desc: 'Офисная работа и проценты со сделок' },
+    { id: 'it_dev', name: 'IT-Разработчик', minAge: 20, reqIq: 75, reqCar: false, salary: 550000, desc: 'Высокая зарплата и удаленная работа' },
+    { id: 'director', name: 'Генеральный директор холдинга', minAge: 26, reqIq: 90, reqCar: true, salary: 1400000, desc: 'Нужен высокий интеллект и личный автомобиль' }
   ];
 
-  const firstNames = ['Марк', 'Айдар', 'Кэндзи', 'Лукас', 'Алексей', 'Матео', 'Арья', 'София', 'Юки', 'Елена'];
-
-  // Игровой стейт
-  let life = null;
-
-  // Пул сюжетных развилок по возрастам
-  const lifeEvents = [
-    {
-      minAge: 14, maxAge: 18,
-      title: 'Уличный конфликт',
-      text: 'Ваш школьный приятель предлагает спрятать у себя сверток с подозрительным содержимым за $300.',
-      choices: [
-        { text: 'Согласиться ради легких денег', effect: { wealth: 300, karma: -15, health: -5 }, log: 'Ввязался в криминал в юности.' },
-        { text: 'Отказаться и отговорить друга', effect: { karma: 10, intellect: 5 }, log: 'Проявил принципиальность.' },
-        { text: 'Сдать его директору школы', effect: { karma: -5, intellect: 5 }, log: 'Выбрал безопасность ценой дружбы.' }
-      ]
-    },
-    {
-      minAge: 19, maxAge: 25,
-      title: 'Карьерный перекресток',
-      text: 'Вам предлагают перспективную работу в серой финансовой конторе с огромной зарплатой или честную практику за гроши.',
-      choices: [
-        { text: 'Идти за деньгами в серую контору', effect: { wealth: 5000, karma: -20, intellect: 10 }, log: 'Стал зарабатывать на мутных схемах.' },
-        { text: 'Выбрать честную практику в институте', effect: { wealth: 300, karma: 15, intellect: 25 }, log: 'Посвятил молодость фундаментальным знаниям.' }
-      ]
-    },
-    {
-      minAge: 26, maxAge: 38,
-      title: 'Крушение компании',
-      text: 'На вашем предприятии кризис. Можно подделать отчетность и спасти фирму, подставив коллегу.',
-      choices: [
-        { text: 'Подделать аудит и спасти свои деньги', effect: { wealth: 8000, karma: -30, health: -10 }, log: 'Спас капитал предательством.' },
-        { text: 'Принять банкротство с честным именем', effect: { wealth: -4000, karma: 25, health: 5 }, log: 'Потерял всё, но сохранил честь.' }
-      ]
-    },
-    {
-      minAge: 40, maxAge: 65,
-      title: 'Зов меценатства',
-      text: 'В вашем регионе экологическое бедствие. Местным жителям нужна помощь.',
-      choices: [
-        { text: 'Пожертвовать половину накоплений больнице', effect: { wealthRatio: 0.5, karma: 40 }, log: 'Стал благотворителем года.' },
-        { text: 'Игнорировать и вложить всё в золото', effect: { wealth: 15000, karma: -10 }, log: 'Предпочел личную безопасность чужому горю.' }
-      ]
-    }
+  const bizCatalog = [
+    { id: 'shaurma', name: 'Ларек с шаурмой', price: 150000, income: 45000, desc: 'Точка у вокзала с быстрой окупаемостью' },
+    { id: 'carwash', name: 'Круглосуточная Автомойка', price: 650000, income: 180000, desc: 'Постоянный поток машин из города' },
+    { id: 'sto', name: 'Тюнинг-ателье и СТО', price: 2200000, income: 600000, desc: 'Обслуживание иномарок и спорткаров' },
+    { id: 'club', name: 'Ночной клуб «Кристалл»', price: 7500000, income: 2100000, desc: 'Элитный отдых и огромная выручка' },
+    { id: 'tk', name: 'Транспортная Компания (ТК)', price: 25000000, income: 7500000, desc: 'Собственный автопарк фур по всей стране' }
   ];
 
-  function updateSoulDisplay() {
-    document.getElementById('soul-rank').innerText = `${playerMeta.rank} (${playerMeta.totalKarma} Кармы)`;
-  }
-  updateSoulDisplay();
+  const carsCatalog = [
+    { id: 'vaz2107', name: 'ВАЗ-2107 «Боевая Классика»', price: 65000, rep: 5 },
+    { id: 'priora', name: 'Lada Priora (Тонированная)', price: 280000, rep: 12 },
+    { id: 'camry', name: 'Toyota Camry 3.5', price: 1800000, rep: 30 },
+    { id: 'bmwm5', name: 'BMW M5 F90 Competition', price: 7500000, rep: 65 },
+    { id: 'g63', name: 'Mercedes-AMG G63 (Гелик)', price: 16000000, rep: 100 },
+    { id: 'bugatti', name: 'Bugatti Chiron', price: 120000000, rep: 250 }
+  ];
 
-  // Старт новой жизни
-  function startRebirth() {
-    haptic('impact', 'medium');
-    const origin = origins[Math.floor(Math.random() * origins.length)];
-    const perk = perks[Math.floor(Math.random() * perks.length)];
-    const name = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const housesCatalog = [
+    { id: 'dorm', name: 'Комната в общежитии', price: 350000, rep: 5 },
+    { id: 'flat1', name: 'Однушка в спальном районе', price: 2400000, rep: 20 },
+    { id: 'flat_center', name: 'Просторная трешка в центре', price: 8500000, rep: 50 },
+    { id: 'cottage', name: 'Загородный коттедж с баней', price: 22000000, rep: 90 },
+    { id: 'mansion', name: 'Особняк на Рублевке', price: 95000000, rep: 200 }
+  ];
 
-    life = {
+  let p = null; // Объект игрока
+
+  function startNewLife() {
+    haptic('medium');
+    const fam = familyTypes[Math.floor(Math.random() * familyTypes.length)];
+    const name = namesList[Math.floor(Math.random() * namesList.length)];
+
+    p = {
       name: name,
-      age: 14,
-      origin: origin,
-      perk: perk,
-      health: 90 + (perk.stat === 'health' ? perk.bonus : 0),
-      wealth: origin.wealth + (perk.stat === 'wealth' ? perk.bonus : 0),
-      intellect: 50 + (perk.stat === 'intellect' ? perk.bonus : 0),
-      karma: perk.stat === 'karma' ? perk.bonus : 0,
-      energy: 100,
-      alloc: { work: 40, study: 30, rest: 30 },
-      isAlive: true,
-      majorFeat: 'Обычная жизнь'
+      age: 0,
+      yearProgress: 0,
+      family: { ...fam },
+      money: fam.startMoney,
+      hp: 100,
+      en: 100,
+      iq: 10 + Math.floor(Math.random() * 10),
+      rep: 0,
+      wanted: 0,
+      jailYears: 0,
+      job: null,
+      cars: [],
+      houses: [],
+      businesses: [],
+      alive: true
     };
 
-    document.getElementById('char-name').innerText = life.name;
-    document.getElementById('char-origin').innerText = `${life.origin.country} · ${life.origin.class}`;
-    document.getElementById('char-perk').innerHTML = `Дар: <strong>${life.perk.name}</strong> <span class="badge ${life.perk.badge}">${life.perk.rarity}</span>`;
-
-    document.getElementById('screen-birth').style.display = 'none';
-    document.getElementById('screen-death').style.display = 'none';
+    document.getElementById('screen-start').style.display = 'none';
+    document.getElementById('screen-end').style.display = 'none';
     document.getElementById('screen-game').style.display = 'flex';
+    document.getElementById('game-log').innerHTML = '';
 
-    document.getElementById('life-log').innerHTML = '';
-    addLog(`Родился в стране ${life.origin.country}. ${life.origin.desc}`);
+    log(`👶 Ты родился в г. ${p.family.city}! Семья: ${p.family.type}.`);
+    setSpeed(1);
+    switchTab('actions');
+    updateHeaderUI();
 
-    updateStats();
-    renderPlanningPhase();
+    if (loopInterval) clearInterval(loopInterval);
+    loopInterval = setInterval(gameTick, 100); // Тик каждые 100 мс
   }
 
-  function updateStats() {
-    document.getElementById('char-age').innerText = `${life.age} лет`;
-    document.getElementById('val-health').innerText = `${Math.max(0, life.health)}%`;
-    document.getElementById('bar-health').style.width = `${Math.max(0, Math.min(100, life.health))}%`;
-
-    document.getElementById('val-wealth').innerText = `$${life.wealth.toLocaleString()}`;
-    const wealthPercent = Math.min(100, (life.wealth / 50000) * 100);
-    document.getElementById('bar-wealth').style.width = `${wealthPercent}%`;
-
-    document.getElementById('val-intellect').innerText = `${Math.min(100, life.intellect)}%`;
-    document.getElementById('bar-intellect').style.width = `${Math.min(100, life.intellect)}%`;
-
-    document.getElementById('val-karma').innerText = life.karma;
-    const karmaPercent = Math.max(0, Math.min(100, (life.karma + 50)));
-    document.getElementById('bar-karma').style.width = `${karmaPercent}%`;
+  function setSpeed(mult) {
+    haptic('light');
+    speedMultiplier = mult;
+    ['0', '0.5', '1', '2', '5'].forEach(id => {
+      const btn = document.getElementById('spd-' + id);
+      if (btn) btn.classList.toggle('active', parseFloat(id) === mult);
+    });
   }
 
-  function addLog(text) {
-    const logBox = document.getElementById('life-log');
-    const entry = document.createElement('div');
-    entry.className = 'log-entry';
-    entry.innerText = `[${life.age} лет] ${text}`;
-    logBox.prepend(entry);
+  function getYearlyIncome() {
+    let total = 0;
+    if (p.age >= 6 && p.age < 18 && p.jailYears === 0) total += p.family.allowance;
+    if (p.job && p.jailYears === 0) total += p.job.salary;
+    p.businesses.forEach(b => total += b.income);
+    return total;
   }
 
-  // Фаза 1: Распределение энергии
-  function renderPlanningPhase() {
-    const card = document.getElementById('interaction-card');
-    card.innerHTML = `
-      <h3>Этап: ${life.age}–${life.age + 4} лет</h3>
-      <p style="margin-bottom: 12px;">Распределите силы на следующие 4 года жизни:</p>
-      
-      <div class="allocation-row">
-        <span>💼 Карьера / Доход</span>
-        <div class="alloc-controls">
-          <button class="btn-circle" onclick="adjustAlloc('work', -10)">-</button>
-          <span style="width: 32px; text-align: center;" id="alloc-work">${life.alloc.work}%</span>
-          <button class="btn-circle" onclick="adjustAlloc('work', 10)">+</button>
-        </div>
-      </div>
+  // Реал-тайм игровой цикл (10 раз в секунду)
+  function gameTick() {
+    if (!p || !p.alive || speedMultiplier === 0) return;
 
-      <div class="allocation-row">
-        <span>🧠 Учёба / Навыки</span>
-        <div class="alloc-controls">
-          <button class="btn-circle" onclick="adjustAlloc('study', -10)">-</button>
-          <span style="width: 32px; text-align: center;" id="alloc-study">${life.alloc.study}%</span>
-          <button class="btn-circle" onclick="adjustAlloc('study', 10)">+</button>
-        </div>
-      </div>
+    const stepPerTick = (10 / baseYearSeconds) * speedMultiplier;
+    p.yearProgress += stepPerTick;
 
-      <div class="allocation-row">
-        <span>❤️ Отдых / Здоровье</span>
-        <div class="alloc-controls">
-          <button class="btn-circle" onclick="adjustAlloc('rest', -10)">-</button>
-          <span style="width: 32px; text-align: center;" id="alloc-rest">${life.alloc.rest}%</span>
-          <button class="btn-circle" onclick="adjustAlloc('rest', 10)">+</button>
-        </div>
-      </div>
+    // Плавное начисление дохода и регенерация бодрости каждую долю секунды
+    const incomePerTick = (getYearlyIncome() / (baseYearSeconds * 10)) * speedMultiplier;
+    if (incomePerTick > 0) p.money += incomePerTick;
 
-      <div class="energy-pool" id="alloc-warning">Баланс: 100%</div>
-      <button class="btn" onclick="commitYears()">Прожить эти годы ➔</button>
-    `;
-  }
+    p.en = Math.min(100, p.en + (0.35 * speedMultiplier));
 
-  function adjustAlloc(field, delta) {
-    haptic('impact', 'light');
-    const totalWithout = Object.keys(life.alloc).reduce((acc, k) => k !== field ? acc + life.alloc[k] : acc, 0);
-    const target = life.alloc[field] + delta;
-    if (target >= 0 && totalWithout + target <= 100) {
-      life.alloc[field] = target;
-      document.getElementById(`alloc-${field}`).innerText = `${target}%`;
-      const sum = totalWithout + target;
-      const warn = document.getElementById('alloc-warning');
-      warn.innerText = `Сумма: ${sum}% / 100%`;
-      warn.style.color = sum === 100 ? 'var(--success)' : 'var(--danger)';
+    if (p.yearProgress >= 100) {
+      p.yearProgress = 0;
+      advanceOneYear();
     }
+
+    updateHeaderUI();
   }
 
-  // Расчет последствий периода
-  function commitYears() {
-    const total = life.alloc.work + life.alloc.study + life.alloc.rest;
-    if (total !== 100) {
-      haptic('notification', 'warning');
-      alert('Распределите ровно 100% времени!');
-      return;
+  function advanceOneYear() {
+    p.age += 1;
+
+    // Если в тюрьме
+    if (p.jailYears > 0) {
+      p.jailYears -= 1;
+      p.hp = Math.max(10, p.hp - 4);
+      if (p.jailYears === 0) {
+        log(`🔓 Ты вышел на свободу! Пора начинать новую главу.`);
+      } else {
+        log(`⛓ Идет срок в колонии. Осталось сидеть: ${p.jailYears} г.`);
+      }
     }
-    haptic('impact', 'medium');
 
-    // Экономический и физический эффект
-    const earned = Math.round((life.alloc.work * 45) * (life.intellect / 50));
-    life.wealth += earned;
-    life.intellect += Math.round(life.alloc.study * 0.15);
-    
-    // Влияние на здоровье (переработка вредит)
-    const healthDelta = (life.alloc.rest * 0.3) - (life.alloc.work * 0.2);
-    life.health = Math.min(100, Math.round(life.health + healthDelta));
+    // Снижение розыска со временем
+    if (p.wanted > 0 && Math.random() < 0.4) p.wanted -= 1;
 
-    addLog(`За 4 года заработано $${earned}, здоровье: ${life.health}%.`);
-    life.age += 4;
-    updateStats();
+    // Возрастные вехи
+    if (p.age === 7) log(`🎒 Тебе исполнилось 7 лет! Ты пошел в школу, открылись новые действия.`);
+    if (p.age === 14) log(`🪪 14 лет! Ты получил паспорт и можешь устраиваться на первые подработки.`);
+    if (p.age === 18) log(`🎉 18 лет! Совершеннолетие: открыты все работы, автосалон, бизнесы и взрослая жизнь!`);
 
-    // Проверка на случайное происшествие или смерть
-    if (life.health <= 0 || (life.age > 60 && Math.random() < (life.age - 55) * 0.03)) {
-      endLife('Смерть от слабого здоровья и старости.');
+    // Естественное старение после 55 лет
+    if (p.age > 55) {
+      p.hp -= Math.floor((p.age - 50) * 0.6);
+    }
+
+    // Проверка смерти
+    if (p.hp <= 0 || (p.age > 75 && Math.random() < (p.age - 70) * 0.04)) {
+      die(p.hp <= 0 ? 'Остановка сердца из-за подорванного здоровья' : 'Глубокая старость');
       return;
     }
 
-    // Триггер сюжетного выбора
-    checkEventTrigger();
+    // Случайное жизненное событие (с шансом 28% каждый год после 6 лет)
+    if (p.age >= 6 && p.jailYears === 0 && Math.random() < 0.28) {
+      triggerRandomEvent();
+    }
+
+    renderActiveTab();
   }
 
-  function checkEventTrigger() {
-    const available = lifeEvents.filter(e => life.age >= e.minAge && life.age <= e.maxAge);
-    if (available.length > 0 && Math.random() < 0.75) {
-      const ev = available[Math.floor(Math.random() * available.length)];
-      renderEvent(ev);
+  function updateHeaderUI() {
+    if (!p) return;
+    document.getElementById('ui-name').innerText = p.name;
+    document.getElementById('ui-age').innerText = `${p.age} лет`;
+    document.getElementById('ui-wanted').innerText = p.wanted > 0 ? '⭐'.repeat(p.wanted) : '';
+
+    let stage = 'Младенец';
+    if (p.jailYears > 0) stage = `В тюрьме (${p.jailYears} г.)`;
+    else if (p.job) stage = p.job.name;
+    else if (p.age >= 18) stage = 'Безработный';
+    else if (p.age >= 7) stage = 'Школьник';
+    else if (p.age >= 3) stage = 'Детский сад';
+
+    document.getElementById('ui-status').innerText = `${stage} · г. ${p.family.city}`;
+    document.getElementById('ui-money').innerText = `${Math.floor(p.money).toLocaleString()} ₽`;
+    document.getElementById('ui-income').innerText = `+${getYearlyIncome().toLocaleString()} ₽ / год`;
+
+    document.getElementById('ui-timer-label').innerText = `Год: ${Math.floor(p.yearProgress)}%`;
+    document.getElementById('ui-year-bar').style.width = `${p.yearProgress}%`;
+
+    document.getElementById('st-hp').innerText = Math.round(p.hp);
+    document.getElementById('bar-hp').style.width = `${Math.max(0, Math.min(100, p.hp))}%`;
+
+    document.getElementById('st-en').innerText = Math.round(p.en);
+    document.getElementById('bar-en').style.width = `${Math.max(0, Math.min(100, p.en))}%`;
+
+    document.getElementById('st-iq').innerText = Math.round(p.iq);
+    document.getElementById('bar-iq').style.width = `${Math.max(0, Math.min(100, p.iq))}%`;
+
+    document.getElementById('st-rep').innerText = Math.round(p.rep);
+    document.getElementById('bar-rep').style.width = `${Math.max(5, Math.min(100, p.rep))}%`;
+  }
+
+  function log(msg) {
+    const box = document.getElementById('game-log');
+    const div = document.createElement('div');
+    div.innerHTML = `<span style="color:var(--gold);">[${p.age} л.]</span> ${msg}`;
+    box.prepend(div);
+  }
+
+  function switchTab(tab) {
+    haptic('light');
+    activeTab = tab;
+    ['actions', 'work', 'shop', 'crime', 'profile'].forEach(t => {
+      document.getElementById('nav-' + t).classList.toggle('active', t === tab);
+    });
+    renderActiveTab();
+  }
+
+  // Отрисовка активной вкладки
+  function renderActiveTab() {
+    const container = document.getElementById('tab-content');
+    if (!p) return;
+
+    if (activeTab === 'actions') {
+      let html = `<div class="section-title">⚡ Быстрое восстановление (В любое время)</div>`;
+      html += `
+        <div class="action-item">
+          <div class="action-info"><h4>🌯 Перекусить шаурмой и энергетиком</h4><p>+35 Бодрости, +5 Здоровья</p></div>
+          <button class="act-btn gold" onclick="quickEat(250)">250 ₽</button>
+        </div>
+        <div class="action-item">
+          <div class="action-info"><h4>🏥 Пройти курс лечения в клинике</h4><p>Восстанавливает +40 Здоровья</p></div>
+          <button class="act-btn green" onclick="healClinic(3000)">3 000 ₽</button>
+        </div>
+      `;
+
+      html += `<div class="section-title">🎯 Действия по возрасту (${p.age} лет)</div>`;
+      if (p.age < 7) {
+        html += `
+          <div class="action-item">
+            <div class="action-info"><h4>🧸 Играть с развивающими кубиками</h4><p>+2 Ума, -15 Бодрости</p></div>
+            <button class="act-btn" onclick="doAct(15, () => { p.iq += 2; log('Ты сложил пирамидку и стал умнее!'); })">Играть</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🍼 Выпросить вкусняшку у мамы</h4><p>+5 Здоровья, +200 ₽ в копилку</p></div>
+            <button class="act-btn" onclick="doAct(20, () => { p.hp = Math.min(100, p.hp+5); p.money += 200; log('Родители дали мелочь в детскую копилку!'); })">Просить</button>
+          </div>
+        `;
+      } else if (p.age < 18) {
+        html += `
+          <div class="action-item">
+            <div class="action-info"><h4>📚 Усердно учиться в школе</h4><p>+4 Ума, -20 Бодрости</p></div>
+            <button class="act-btn" onclick="doAct(20, () => { p.iq += 4; log('Получил пятерку на контрольной (+4 Ума).'); })">Учиться</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🧽 Помыть фары машинам на светофоре</h4><p>Заработок 300–900 ₽, -25 Бодрости</p></div>
+            <button class="act-btn green" onclick="doAct(25, () => { let m = 300 + Math.floor(Math.random()*600); p.money += m; log('Водитель дал на чай ' + m + ' ₽ за чистые фары!'); })">Заработать</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🥊 Тренироваться на турниках во дворе</h4><p>+3 Здоровья, +2 Авторитета, -20 Бодрости</p></div>
+            <button class="act-btn" onclick="doAct(20, () => { p.hp = Math.min(100, p.hp+3); p.rep += 2; log('Подтянулся 20 раз перед пацанами (+2 Авт).'); })">Тренировка</button>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="action-item">
+            <div class="action-info"><h4>🎓 Пройти профессиональные курсы</h4><p>+6 Ума, стоит 5 000 ₽, -25 Бодрости</p></div>
+            <button class="act-btn" onclick="studyAdult()">5 000 ₽</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🏋️‍♂️ Сходить в элитный спортзал</h4><p>+8 Здоровья, +3 Авторитета, -25 Бодрости</p></div>
+            <button class="act-btn" onclick="gymAdult()">1 500 ₽</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🎰 Сыграть в подпольном казино (Рулетка x2)</h4><p>Шанс удвоить ставку 10 000 ₽ или проиграть</p></div>
+            <button class="act-btn gold" onclick="playCasino(10000)">Ставка 10к ₽</button>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    else if (activeTab === 'work') {
+      let html = `<div class="section-title">💼 Официальная работа и карьера</div>`;
+      jobsCatalog.forEach(j => {
+        const isCurrent = p.job && p.job.id === j.id;
+        const canApply = p.age >= j.minAge && p.iq >= j.reqIq && (!j.reqCar || p.cars.length > 0);
+        html += `
+          <div class="action-item">
+            <div class="action-info">
+              <h4>${j.name} ${isCurrent ? '✅' : ''}</h4>
+              <p>Зарплата: <b style="color:var(--green)">${j.salary.toLocaleString()} ₽/год</b> · Мин. возраст: ${j.minAge} л., Ум: ${j.reqIq}${j.reqCar ? ', Авто 🚗' : ''}</p>
+            </div>
+            <button class="act-btn ${isCurrent ? 'gold' : ''}" ${(!canApply || isCurrent) ? 'disabled' : ''} onclick="takeJob('${j.id}')">
+              ${isCurrent ? 'Работаешь' : 'Устроиться'}
+            </button>
+          </div>
+        `;
+      });
+
+      html += `<div class="section-title">🏪 Покупка бизнеса (Пассивный доход)</div>`;
+      bizCatalog.forEach(b => {
+        const count = p.businesses.filter(x => x.id === b.id).length;
+        html += `
+          <div class="action-item">
+            <div class="action-info">
+              <h4>${b.name} ${count > 0 ? `(У тебя: ${count})` : ''}</h4>
+              <p>Доход: <b style="color:var(--green)">+${b.income.toLocaleString()} ₽/год</b> · ${b.desc}</p>
+            </div>
+            <button class="act-btn green" onclick="buyBiz('${b.id}')">${b.price.toLocaleString()} ₽</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    else if (activeTab === 'shop') {
+      let html = `<div class="section-title">🚗 Автосалон (Покупка в любое время)</div>`;
+      carsCatalog.forEach(c => {
+        const owned = p.cars.some(x => x.id === c.id);
+        html += `
+          <div class="action-item">
+            <div class="action-info">
+              <h4>${c.name} ${owned ? '✅' : ''}</h4>
+              <p>+${c.rep} Авторитета · Открывает работу в такси/бизнесе</p>
+            </div>
+            <button class="act-btn ${owned ? 'gold' : 'green'}" ${owned ? 'disabled' : ''} onclick="buyCar('${c.id}')">
+              ${owned ? 'В гараже' : c.price.toLocaleString() + ' ₽'}
+            </button>
+          </div>
+        `;
+      });
+
+      html += `<div class="section-title">🏠 Агентство недвижимости</div>`;
+      housesCatalog.forEach(h => {
+        const owned = p.houses.some(x => x.id === h.id);
+        html += `
+          <div class="action-item">
+            <div class="action-info">
+              <h4>${h.name} ${owned ? '✅' : ''}</h4>
+              <p>+${h.rep} Авторитета и статуса в городе</p>
+            </div>
+            <button class="act-btn ${owned ? 'gold' : 'green'}" ${owned ? 'disabled' : ''} onclick="buyHouse('${h.id}')">
+              ${owned ? 'Куплено' : h.price.toLocaleString() + ' ₽'}
+            </button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    else if (activeTab === 'crime') {
+      let html = `<div class="section-title">🔫 Улица и Криминал (Розыск: ${p.wanted} ⭐)</div>`;
+      if (p.age < 12) {
+        html += `<div class="card"><p style="font-size:13px; color:var(--muted);">Криминальные дела доступны с 12 лет.</p></div>`;
+      } else {
+        html += `
+          <div class="action-item">
+            <div class="action-info"><h4>🕶 Украсть магнитолу / Скрутить номера</h4><p>Куш: 2 000 – 8 000 ₽ · Низкий риск</p></div>
+            <button class="act-btn red" onclick="doCrime('Мелкая кража', 5000, 0.8, 1)">Рискнуть</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🚘 Угнать иномарку на разборку</h4><p>Куш: 45 000 – 120 000 ₽ · Средний риск</p></div>
+            <button class="act-btn red" onclick="doCrime('Угон автомобиля', 85000, 0.65, 2)">Угнать</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>💼 Крышевание ларьков на районе</h4><p>Куш: 250 000 ₽ + 15 Авт · Высокий риск</p></div>
+            <button class="act-btn red" onclick="doCrime('Рэкет', 250000, 0.55, 3)">Собрать дань</button>
+          </div>
+          <div class="action-item">
+            <div class="action-info"><h4>🏦 Ограбление инкассаторов</h4><p>Куш: 2 500 000 ₽ · Огромный риск колонии</p></div>
+            <button class="act-btn red" onclick="doCrime('Ограбление инкассаторов', 2500000, 0.35, 5)">На дело</button>
+          </div>
+        `;
+      }
+
+      if (p.wanted > 0) {
+        const bribeCost = p.wanted * 15000;
+        html += `
+          <div class="section-title">🚓 Решить вопрос с полицией</div>
+          <div class="action-item">
+            <div class="action-info"><h4>💵 Занести конверт следователю</h4><p>Полностью снимает все звезды розыска (${p.wanted} ⭐)</p></div>
+            <button class="act-btn gold" onclick="payBribe(${bribeCost})">${bribeCost.toLocaleString()} ₽</button>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    else if (activeTab === 'profile') {
+      let html = `
+        <div class="section-title">👨‍👩‍👦 Твоя Семья (г. ${p.family.city})</div>
+        <div class="card">
+          <div style="font-size:13px; margin-bottom:6px;">Тип семьи: <b>${p.family.type}</b></div>
+          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Отношения с родителями: <b>${p.family.rel}%</b> · Карманные (до 18 л.): <b>${p.family.allowance} ₽/год</b></div>
+          <div style="display:flex; gap:8px;">
+            <button class="act-btn" style="flex:1;" onclick="askParentsMoney()">Попросить денег</button>
+            <button class="act-btn green" style="flex:1;" onclick="helpParents()">Помочь родителям (5к ₽)</button>
+          </div>
+        </div>
+
+        <div class="section-title">🚗 Твой Гараж (${p.cars.length}) и Жилье (${p.houses.length})</div>
+      `;
+
+      if (p.cars.length === 0 && p.houses.length === 0) {
+        html += `<div class="card"><p style="font-size:12px; color:var(--muted);">У тебя пока нет личного транспорта или недвижимости. Загляни во вкладку «Магазин»!</p></div>`;
+      } else {
+        p.cars.forEach((c, idx) => {
+          const sellPrice = Math.floor(c.price * 0.75);
+          html += `
+            <div class="action-item">
+              <div class="action-info"><h4>🚗 ${c.name}</h4><p>Можно продать перекупам за 75% цены</p></div>
+              <button class="act-btn gold" onclick="sellCar(${idx}, ${sellPrice})">Продать +${sellPrice.toLocaleString()} ₽</button>
+            </div>
+          `;
+        });
+        p.houses.forEach((h, idx) => {
+          const sellPrice = Math.floor(h.price * 0.85);
+          html += `
+            <div class="action-item">
+              <div class="action-info"><h4>🏠 ${h.name}</h4><p>Продажа по рыночной стоимости (85%)</p></div>
+              <button class="act-btn gold" onclick="sellHouse(${idx}, ${sellPrice})">Продать +${sellPrice.toLocaleString()} ₽</button>
+            </div>
+          `;
+        });
+      }
+      container.innerHTML = html;
+    }
+  }
+
+  // Механика действий
+  function doAct(enCost, callback) {
+    if (p.en < enCost) {
+      haptic('warning');
+      log('⚠️ Не хватает бодрости! Перекуси шаурмой или подожди пару секунд.');
+      return;
+    }
+    haptic('light');
+    p.en -= enCost;
+    callback();
+    updateHeaderUI();
+  }
+
+  function quickEat(cost) {
+    if (p.money < cost) { log('❌ Не хватает денег на перекус!'); return; }
+    haptic('light');
+    p.money -= cost;
+    p.en = Math.min(100, p.en + 35);
+    p.hp = Math.min(100, p.hp + 5);
+    log('🌯 Ты плотно перекусил (+35 Бодрости).');
+    updateHeaderUI();
+  }
+
+  function healClinic(cost) {
+    if (p.money < cost) { log('❌ Недостаточно средств на клинику!'); return; }
+    haptic('medium');
+    p.money -= cost;
+    p.hp = Math.min(100, p.hp + 40);
+    log('🏥 Врачи поправили твое здоровье (+40 ❤️).');
+    updateHeaderUI();
+  }
+
+  function studyAdult() {
+    if (p.money < 5000 || p.en < 25) { log('❌ Нужно 5 000 ₽ и 25 Бодрости!'); return; }
+    haptic('light');
+    p.money -= 5000;
+    p.en -= 25;
+    p.iq = Math.min(100, p.iq + 6);
+    log('🎓 Ты прошел курсы повышения квалификации (+6 Ума).');
+    updateHeaderUI();
+  }
+
+  function gymAdult() {
+    if (p.money < 1500 || p.en < 25) { log('❌ Нужно 1 500 ₽ и 25 Бодрости!'); return; }
+    haptic('light');
+    p.money -= 1500;
+    p.en -= 25;
+    p.hp = Math.min(100, p.hp + 8);
+    p.rep += 3;
+    log('🏋️‍♂️ Отличная тренировка в зале (+8 Здоровья, +3 Авт).');
+    updateHeaderUI();
+  }
+
+  function playCasino(bet) {
+    if (p.money < bet) { log('❌ Нет 10 000 ₽ для ставки в казино!'); return; }
+    haptic('medium');
+    if (Math.random() < 0.48) {
+      p.money += bet;
+      log(`🎰 ДЖЕКПОТ! Ты поднял +${bet.toLocaleString()} ₽ на рулетке!`);
     } else {
-      renderPlanningPhase();
+      p.money -= bet;
+      log(`🎰 Ставка не сыграла. Проиграно ${bet.toLocaleString()} ₽.`);
     }
+    updateHeaderUI();
   }
 
-  function renderEvent(ev) {
-    const card = document.getElementById('interaction-card');
-    let buttonsHtml = ev.choices.map((c, idx) => `
-      <button class="choice-btn" onclick="resolveChoice(${idx}, ${JSON.stringify(ev.choices).replace(/"/g, '&quot;')})">
-        ${c.text}
-      </button>
-    `).join('');
-
-    card.innerHTML = `
-      <h3>${ev.title}</h3>
-      <p style="margin-bottom: 8px;">${ev.text}</p>
-      <div class="choices-list">${buttonsHtml}</div>
-    `;
+  // Работа и Бизнес
+  function takeJob(id) {
+    const job = jobsCatalog.find(j => j.id === id);
+    if (!job) return;
+    haptic('medium');
+    p.job = job;
+    log(`💼 Ты устроился на работу: ${job.name} (${job.salary.toLocaleString()} ₽/год)!`);
+    renderActiveTab();
+    updateHeaderUI();
   }
 
-  function resolveChoice(index, choices) {
-    haptic('impact', 'medium');
-    const c = choices[index];
-    if (c.effect.wealth) life.wealth += c.effect.wealth;
-    if (c.effect.wealthRatio) life.wealth = Math.round(life.wealth * c.effect.wealthRatio);
-    if (c.effect.health) life.health += c.effect.health;
-    if (c.effect.intellect) life.intellect += c.effect.intellect;
-    if (c.effect.karma) life.karma += c.effect.karma;
+  function buyBiz(id) {
+    const b = bizCatalog.find(x => x.id === id);
+    if (p.money < b.price) { log(`❌ Нужно ${b.price.toLocaleString()} ₽ для покупки бизнеса!`); return; }
+    haptic('medium');
+    p.money -= b.price;
+    p.businesses.push(b);
+    p.rep += 15;
+    log(`🏪 Ты открыл бизнес «${b.name}»! Пассивный доход вырос.`);
+    renderActiveTab();
+    updateHeaderUI();
+  }
 
-    addLog(c.log);
-    updateStats();
+  // Покупка и продажа имущества
+  function buyCar(id) {
+    const c = carsCatalog.find(x => x.id === id);
+    if (p.money < c.price) { log(`❌ Не хватает денег на ${c.name}!`); return; }
+    haptic('medium');
+    p.money -= c.price;
+    p.cars.push(c);
+    p.rep += c.rep;
+    log(`🚗 Поздравляем с покупкой ${c.name}! (+${c.rep} Авт)`);
+    renderActiveTab();
+    updateHeaderUI();
+  }
 
-    if (life.karma > 30) life.majorFeat = 'Служитель общества';
-    if (life.wealth > 80000) life.majorFeat = 'Капиталист';
-    if (life.intellect > 85) life.majorFeat = 'Великий ученый';
+  function buyHouse(id) {
+    const h = housesCatalog.find(x => x.id === id);
+    if (p.money < h.price) { log(`❌ Не хватает денег на ${h.name}!`); return; }
+    haptic('medium');
+    p.money -= h.price;
+    p.houses.push(h);
+    p.rep += h.rep;
+    log(`🏠 Ты купил недвижимость: ${h.name}! (+${h.rep} Авт)`);
+    renderActiveTab();
+    updateHeaderUI();
+  }
 
-    if (life.health <= 0) {
-      endLife('Погиб от трагических последствий своего выбора.');
-      return;
+  function sellCar(idx, price) {
+    const car = p.cars.splice(idx, 1)[0];
+    p.money += price;
+    log(`💵 Ты продал ${car.name} за ${price.toLocaleString()} ₽.`);
+    renderActiveTab();
+    updateHeaderUI();
+  }
+
+  function sellHouse(idx, price) {
+    const house = p.houses.splice(idx, 1)[0];
+    p.money += price;
+    log(`💵 Ты продал ${house.name} за ${price.toLocaleString()} ₽.`);
+    renderActiveTab();
+    updateHeaderUI();
+  }
+
+  // Криминал
+  function doCrime(title, reward, chance, stars) {
+    if (p.en < 25) { log('⚠️ Нужно 25 Бодрости для криминала!'); return; }
+    p.en -= 25;
+    haptic('medium');
+
+    if (Math.random() < chance) {
+      const cash = Math.floor(reward * (0.7 + Math.random() * 0.6));
+      p.money += cash;
+      p.rep += stars * 5;
+      p.wanted = Math.min(5, p.wanted + 1);
+      log(`🔫 Успех (${title})! Добыча: +${cash.toLocaleString()} ₽.`);
+    } else {
+      p.wanted = Math.min(5, p.wanted + stars);
+      if (p.wanted >= 3) {
+        const years = 2 + stars;
+        p.jailYears = years;
+        p.wanted = 0;
+        p.job = null;
+        log(`🚓 ПРОВАЛ! Тебя задержал ОМОН. Суд назначил ${years} г. колонии.`);
+      } else {
+        p.hp -= 15;
+        log(`🚓 Дело сорвалось! Ты еле ушел дворами (-15 ❤️, +Розыск).`);
+      }
     }
-
-    renderPlanningPhase();
+    renderActiveTab();
+    updateHeaderUI();
   }
 
-  // Финал жизни
-  function endLife(reason) {
-    haptic('notification', 'error');
-    playerMeta.reincarnations += 1;
-    playerMeta.totalKarma += life.karma;
+  function payBribe(cost) {
+    if (p.money < cost) { log('❌ Не хватает денег на взятку!'); return; }
+    p.money -= cost;
+    p.wanted = 0;
+    log('🤝 Вопрос решен. Твое дело закрыто, розыск снят.');
+    renderActiveTab();
+    updateHeaderUI();
+  }
 
-    // Расчет ранга души
-    if (playerMeta.totalKarma >= 100) playerMeta.rank = 'Просветленный';
-    else if (playerMeta.totalKarma >= 50) playerMeta.rank = 'Мудрец';
-    else if (playerMeta.totalKarma >= 20) playerMeta.rank = 'Искатель';
-    else playerMeta.rank = 'Странник';
+  // Семья
+  function askParentsMoney() {
+    if (p.en < 15) { log('⚠️ Мало бодрости!'); return; }
+    p.en -= 15;
+    if (p.family.rel >= 50) {
+      const gift = p.family.allowance * 2;
+      p.money += gift;
+      p.family.rel -= 5;
+      log(`👨‍👩‍👦 Родители перевели тебе ${gift.toLocaleString()} ₽ на расходы.`);
+    } else {
+      log(`👨‍👩‍👦 Родители отказали: «Хватит сидеть у нас на шее!»`);
+    }
+    renderActiveTab();
+    updateHeaderUI();
+  }
 
-    localStorage.setItem('samsara_meta', JSON.stringify(playerMeta));
+  function helpParents() {
+    if (p.money < 5000) { log('❌ Нужно 5 000 ₽ на подарок родителям!'); return; }
+    p.money -= 5000;
+    p.family.rel = Math.min(100, p.family.rel + 15);
+    p.rep += 5;
+    log('❤️ Ты купил подарки и продукты родителям! Отношения улучшились.');
+    renderActiveTab();
+  }
+
+  // Случайные интерактивные события (ставят таймер на паузу)
+  const randomEventsPool = [
+    {
+      title: 'Находка в старом гараже',
+      desc: 'Разбирая хлам у соседа, ты наткнулся на запечатанную коробку с советским антиквариатом.',
+      choices: [
+        { text: 'Продать коллекционеру (+15 000 ₽)', fn: () => { p.money += 15000; log('Продал находку за 15 000 ₽!'); } },
+        { text: 'Вернуть соседу (+10 Авторитета)', fn: () => { p.rep += 10; log('Сосед отблагодарил тебя и всем рассказал о твоей честности.'); } }
+      ]
+    },
+    {
+      title: 'Предложение от старого друга',
+      desc: 'Одноклассник зовет вложиться в партию кроссовок из Китая для перепродажи (нужно 10 000 ₽).',
+      choices: [
+        { text: 'Вложиться (Риск 50/50 на +35 000 ₽)', fn: () => {
+          if (p.money < 10000) { log('Не хватило денег для вложения.'); return; }
+          p.money -= 10000;
+          if (Math.random() < 0.6) { p.money += 35000; log('Партия разлетелась! Прибыль +35 000 ₽.'); }
+          else { log('Товар застрял на таможне. Деньги сгорели.'); }
+        }},
+        { text: 'Отказаться от мутной темы', fn: () => { log('Ты решил поберечь свои сбережения.'); } }
+      ]
+    },
+    {
+      title: 'Дорожный конфликт',
+      desc: 'На парковке у ТЦ мажор задел тебя плечом и начал качать права при толпе.',
+      choices: [
+        { text: 'Ответить жестко (+12 Авт, -10 Здоровья)', fn: () => { p.rep += 12; p.hp -= 10; log('Ты постоял за себя! Уважение на районе выросло.'); } },
+        { text: 'Решить словами (Ум +3)', fn: () => { p.iq += 3; log('Ты грамотно разрулил конфликт без драки.'); } }
+      ]
+    }
+  ];
+
+  function triggerRandomEvent() {
+    savedSpeedBeforeModal = speedMultiplier;
+    setSpeed(0); // Пауза пока игрок выбирает
+
+    const ev = randomEventsPool[Math.floor(Math.random() * randomEventsPool.length)];
+    document.getElementById('ev-title').innerText = ev.title;
+    document.getElementById('ev-desc').innerText = ev.desc;
+
+    const box = document.getElementById('ev-choices');
+    box.innerHTML = '';
+    ev.choices.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'modal-choice';
+      btn.innerText = ch.text;
+      btn.onclick = () => {
+        haptic('light');
+        ch.fn();
+        document.getElementById('event-modal').style.display = 'none';
+        setSpeed(savedSpeedBeforeModal || 1);
+        updateHeaderUI();
+      };
+      box.appendChild(btn);
+    });
+
+    document.getElementById('event-modal').style.display = 'flex';
+  }
+
+  function die(reason) {
+    p.alive = false;
+    clearInterval(loopInterval);
+    haptic('heavy');
+
+    const totalMoney = Math.floor(p.money);
+    meta.lives += 1;
+    if (totalMoney > meta.recordMoney) meta.recordMoney = totalMoney;
+    localStorage.setItem('crmp_life_meta', JSON.stringify(meta));
 
     document.getElementById('screen-game').style.display = 'none';
-    document.getElementById('screen-death').style.display = 'block';
+    document.getElementById('screen-end').style.display = 'block';
 
-    document.getElementById('death-cause').innerText = `${reason} Возраст: ${life.age} лет.`;
-    document.getElementById('summary-identity').innerText = `${life.name} (${life.origin.country})`;
-    document.getElementById('summary-feat').innerText = life.majorFeat;
-    document.getElementById('summary-karma').innerText = `${life.karma > 0 ? '+' : ''}${life.karma}`;
-    document.getElementById('summary-cycles').innerText = playerMeta.reincarnations;
+    document.getElementById('end-reason').innerText = `${reason} (${p.age} лет)`;
+    document.getElementById('end-name').innerText = `${p.name} (г. ${p.family.city})`;
+    document.getElementById('end-family').innerText = p.family.type;
+    document.getElementById('end-age').innerText = `${p.age} лет`;
+    document.getElementById('end-money').innerText = `${totalMoney.toLocaleString()} ₽`;
+    document.getElementById('end-assets').innerText = `${p.cars.length} авто, ${p.houses.length} жилья, ${p.businesses.length} бизнесов`;
+    document.getElementById('end-rep').innerText = p.rep;
   }
 
-  function returnToSanctuary() {
-    haptic('impact', 'light');
-    updateSoulDisplay();
-    document.getElementById('screen-death').style.display = 'none';
-    document.getElementById('screen-birth').style.display = 'block';
-  }
-
-  function shareResult() {
-    const text = `В «Лотерее Сансары» я прожил жизнь гражданина ${life.origin.country} (${life.name}), достиг статуса «${life.majorFeat}» и закончил путь в ${life.age} лет с кармой ${life.karma}!`;
-    if (tg && tg.openTelegramLink) {
-      tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/your_bot_name&text=${encodeURIComponent(text)}`);
-    } else {
-      navigator.clipboard?.writeText(text);
-      alert('Результат скопирован в буфер обмена!');
-    }
+  function backToMenu() {
+    updateMetaUI();
+    document.getElementById('screen-end').style.display = 'none';
+    document.getElementById('screen-start').style.display = 'block';
   }
 </script>
 </body>
