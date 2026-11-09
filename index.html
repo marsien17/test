@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Жизнь RP — Симулятор Судьбы</title>
+  <title>Жизнь RP 2.0 — Симулятор Судьбы</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: #0b0d13;
-      --card: #151924;
-      --card-light: #1e2433;
-      --border: #2a3246;
+      --bg: #0b0e14;
+      --card: #151922;
+      --card-2: #1c2230;
+      --border: #2a3347;
       --text: #f3f4f6;
       --muted: #8b95a5;
       --accent: #3b82f6;
       --gold: #f59e0b;
       --green: #10b981;
       --red: #ef4444;
-      --purple: #8b5cf6;
+      --purple: #a855f7;
     }
 
     * {
@@ -32,671 +32,836 @@
     body {
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-    }
-
-    .app-wrap {
-      max-width: 500px;
-      width: 100%;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
       height: 100vh;
-      padding: 10px;
+      overflow: hidden;
     }
 
-    /* Карточки и скролл */
+    .app {
+      max-width: 500px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+    }
+
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 12px;
-      margin-bottom: 10px;
-    }
-
-    .scroll-area {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 2px;
       margin-bottom: 8px;
     }
 
-    /* Верхняя панель времени и возраста */
-    .top-bar {
+    /* Стартовый экран */
+    .gender-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0 14px;
+    }
+
+    .gender-btn {
+      background: var(--card-2);
+      border: 2px solid var(--border);
+      color: var(--text);
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .gender-btn.active {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.15);
+    }
+
+    .name-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .name-input {
+      flex: 1;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    /* Верхняя шапка с аватаром персонажа */
+    .hero-header {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
+      padding: 10px;
+      margin-bottom: 6px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
     }
 
-    .top-row {
+    .avatar-box {
+      width: 78px;
+      height: 78px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      position: relative;
+      background: #1e293b;
+    }
+
+    .hero-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .hero-top-line {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 3px;
+    }
+
+    .hero-name {
+      font-size: 15px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .age-badge {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--gold);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .hero-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hero-bottom-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .money-pill {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--green);
+    }
+
+    .next-turn-btn {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+      white-space: nowrap;
+    }
+
+    .next-turn-btn:active { transform: scale(0.96); }
+    .next-turn-btn.jail-btn {
+      background: linear-gradient(135deg, #ef4444, #b91c1c);
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+    }
+
+    /* Статы */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
       margin-bottom: 6px;
     }
 
-    .char-badge {
-      font-size: 14px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .balance-box {
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--green);
-      background: rgba(16, 185, 129, 0.12);
-      padding: 4px 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    /* Таймер года и кнопки скорости */
-    .time-controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .year-bar-bg {
-      flex: 1;
-      height: 8px;
-      background: #23293a;
-      border-radius: 4px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .year-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), var(--purple));
-      width: 0%;
-      transition: width 0.1s linear;
-    }
-
-    .speed-btn {
-      background: var(--card-light);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 7px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .speed-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    /* Показатели (Здоровье, Бодрость, Ум, Авторитет) */
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .stat-pill {
+    .stat-box {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 6px 8px;
-      font-size: 11px;
+      border-radius: 9px;
+      padding: 5px 7px;
+      font-size: 10px;
     }
 
-    .stat-pill-head {
+    .stat-head {
       display: flex;
       justify-content: space-between;
+      font-weight: 700;
       margin-bottom: 3px;
-      font-weight: 600;
     }
 
-    .mini-bar {
+    .bar-bg {
       height: 4px;
-      background: #252b3d;
+      background: #252d3d;
       border-radius: 2px;
       overflow: hidden;
     }
 
-    .mini-fill { height: 100%; transition: width 0.2s; }
+    .bar-fill { height: 100%; transition: width 0.2s; }
 
-    /* Список элементов во вкладках */
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
+    /* Контент вкладок */
+    .scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 2px;
+      margin-bottom: 6px;
+    }
+
+    .cat-title {
+      font-size: 11px;
+      font-weight: 800;
       text-transform: uppercase;
       color: var(--muted);
-      margin: 10px 0 6px 2px;
+      margin: 8px 0 6px 2px;
       letter-spacing: 0.5px;
     }
 
-    .action-item {
-      background: var(--card-light);
+    .item-card {
+      background: var(--card-2);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
+      padding: 9px 10px;
+      margin-bottom: 7px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
       gap: 10px;
     }
 
-    .action-info h4 {
-      font-size: 14px;
+    .item-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .item-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-body h4 {
+      font-size: 13px;
       font-weight: 700;
       margin-bottom: 2px;
     }
 
-    .action-info p {
+    .item-body p {
       font-size: 11px;
       color: var(--muted);
-      line-height: 1.3;
+      line-height: 1.25;
     }
 
-    .act-btn {
+    .btn-act {
       background: var(--accent);
       color: #fff;
       border: none;
       border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 12px;
+      padding: 7px 10px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
       flex-shrink: 0;
     }
 
-    .act-btn:active { transform: scale(0.96); }
-    .act-btn:disabled { background: #2c3347; color: #687285; cursor: not-allowed; }
-    .act-btn.green { background: var(--green); }
-    .act-btn.gold { background: var(--gold); color: #000; }
-    .act-btn.red { background: var(--red); }
+    .btn-act:active { transform: scale(0.96); }
+    .btn-act:disabled { background: #283044; color: #647087; cursor: not-allowed; }
+    .btn-act.green { background: var(--green); }
+    .btn-act.gold { background: var(--gold); color: #000; }
+    .btn-act.red { background: var(--red); }
+    .btn-act.purple { background: var(--purple); }
 
-    /* Лог событий внизу */
-    .log-strip {
-      background: #10131c;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 6px 10px;
-      height: 58px;
-      overflow-y: auto;
-      font-size: 11px;
-      margin-bottom: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+    /* Реалистичный Автономер РФ / Мира */
+    .plate-wrap {
+      display: inline-flex;
+      align-items: center;
+      background: #ffffff;
+      color: #111;
+      border: 2px solid #111;
+      border-radius: 6px;
+      font-family: "Arial Black", Impact, sans-serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      overflow: hidden;
+      margin: 4px 0;
     }
 
-    /* Нижнее меню навигации (5 вкладок) */
-    .bottom-nav {
+    .plate-main {
+      padding: 3px 8px;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .plate-region {
+      border-left: 2px solid #111;
+      padding: 2px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .plate-reg-num { font-size: 12px; font-weight: 900; }
+    .plate-flag { font-size: 8px; font-weight: 800; margin-top: 1px; }
+
+    /* Бейджи редкости */
+    .rarity-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .r-common { background: #374151; color: #e5e7eb; }
+    .r-rare { background: #1d4ed8; color: #bfdbfe; }
+    .r-epic { background: #7e22ce; color: #f3e8ff; }
+    .r-legend { background: #b45309; color: #fef3c7; }
+    .r-mythic { background: linear-gradient(90deg, #dc2626, #f59e0b); color: #fff; }
+
+    /* Лог и нижняя навигация */
+    .log-panel {
+      background: #0e1118;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 5px 8px;
+      height: 48px;
+      overflow-y: auto;
+      font-size: 11px;
+      margin-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-bar {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 3px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 4px;
     }
 
-    .nav-btn {
+    .nav-item {
       background: transparent;
       border: none;
       color: var(--muted);
-      padding: 8px 2px;
+      padding: 6px 2px;
       border-radius: 8px;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
       cursor: pointer;
     }
 
-    .nav-btn span.icon { font-size: 16px; }
-    .nav-btn.active {
-      background: var(--card-light);
+    .nav-item span.ico { font-size: 15px; }
+    .nav-item.active {
+      background: var(--card-2);
       color: var(--text);
       border: 1px solid var(--border);
-    }
-
-    /* Стартовый экран выбора времени */
-    .time-preset-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin: 12px 0 20px;
-    }
-
-    .preset-btn {
-      background: var(--card-light);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .preset-btn.selected {
-      background: rgba(59, 130, 246, 0.2);
-      border-color: var(--accent);
-      color: #60a5fa;
-    }
-
-    .big-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    /* Модальное окно случайных событий */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.78);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-      z-index: 100;
-    }
-
-    .modal-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 18px;
-      max-width: 420px;
-      width: 100%;
-    }
-
-    .modal-choice {
-      width: 100%;
-      text-align: left;
-      background: var(--card-light);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 11px 12px;
-      border-radius: 10px;
-      margin-top: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-<div class="app-wrap">
-  <!-- ЭКРАН 1: НАСТРОЙКА ПЕРЕД РОЖДЕНИЕМ -->
-  <div id="screen-start" class="card" style="margin: auto 0; text-align: center; padding: 20px;">
-    <div style="font-size: 46px; margin-bottom: 8px;">🏙️</div>
-    <h1 style="font-size: 22px; margin-bottom: 6px;">Жизнь RP: Симулятор Судьбы</h1>
-    <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
-      Ты рождаешься в случайном городе и семье с разным достатком. Поднимись с низов, покупай тачки, открывай бизнесы или стань криминальным авторитетом.
+<div class="app">
+  <!-- ЭКРАН 1: СОЗДАНИЕ ПЕРСОНАЖА -->
+  <div id="screen-create" class="card" style="margin: auto 0; padding: 18px; text-align: center;">
+    <div style="font-size: 42px; margin-bottom: 6px;">🌍</div>
+    <h1 style="font-size: 20px; margin-bottom: 4px;">Жизнь RP 2.0: Новая Эра</h1>
+    <p style="font-size: 12px; color: var(--muted); margin-bottom: 14px;">
+      Выбери пол и имя. До 18 лет ты взрослеешь и строишь базу, а после 18 начинается бесконечная взрослая жизнь: тачки, блатные номера, переезды и семья!
     </p>
 
-    <div style="background: var(--card-light); padding: 10px; border-radius: 10px; margin-bottom: 16px; font-size: 13px;">
-      🧬 Прожито жизней: <b id="meta-lives">0</b> · 🏆 Рекорд капитала: <b id="meta-record" style="color: var(--gold);">0 ₽</b>
+    <div style="text-align: left; font-size: 12px; font-weight: 700;">1. Выбери пол персонажа:</div>
+    <div class="gender-grid">
+      <button class="gender-btn active" id="gen-M" onclick="selectGender('M')">
+        <span style="font-size: 26px;">👦</span>
+        Мужской
+      </button>
+      <button class="gender-btn" id="gen-F" onclick="selectGender('F')">
+        <span style="font-size: 26px;">👧</span>
+        Женский
+      </button>
     </div>
 
-    <div style="text-align: left; font-size: 13px; font-weight: 700;">⏱ Длительность 1 года жизни (1x):</div>
-    <div class="time-preset-grid" id="time-presets">
-      <button class="preset-btn" onclick="selectYearDuration(1, this)">1 сек</button>
-      <button class="preset-btn" onclick="selectYearDuration(3, this)">3 сек</button>
-      <button class="preset-btn selected" onclick="selectYearDuration(5, this)">5 сек</button>
-      <button class="preset-btn" onclick="selectYearDuration(15, this)">15 сек</button>
-      <button class="preset-btn" onclick="selectYearDuration(30, this)">30 сек</button>
-      <button class="preset-btn" onclick="selectYearDuration(60, this)">1 мин (60с)</button>
+    <div style="text-align: left; font-size: 12px; font-weight: 700; margin-bottom: 6px;">2. Имя персонажа:</div>
+    <div class="name-input-row">
+      <input type="text" id="inp-name" class="name-input" value="Александр" maxlength="16">
+      <button class="btn-act" onclick="rollRandomName()">🎲 Имя</button>
     </div>
 
-    <button class="big-btn" onclick="startNewLife()">🎲 Родиться в случайной семье</button>
+    <button class="btn-act" style="width: 100%; padding: 13px; font-size: 15px;" onclick="startGame()">
+      👶 Родиться в случайной семье
+    </button>
   </div>
 
   <!-- ЭКРАН 2: ОСНОВНАЯ ИГРА -->
-  <div id="screen-game" style="display: none; flex-direction: column; height: 100%;">
-    <!-- Верхняя шапка -->
-    <div class="top-bar">
-      <div class="top-row">
-        <div>
-          <div class="char-badge">
-            <span id="ui-name">Александр</span>
-            <span style="color: var(--gold);" id="ui-age">0 лет</span>
-            <span id="ui-wanted" style="color: var(--red); font-size: 12px;"></span>
+  <div id="screen-main" style="display: none; flex-direction: column; height: 100%;">
+    <!-- Шапка с динамическим SVG-портретом -->
+    <div class="hero-header">
+      <div class="avatar-box" id="avatar-svg-box"></div>
+      <div class="hero-info">
+        <div class="hero-top-line">
+          <div class="hero-name" id="ui-char-name">Александр</div>
+          <div class="age-badge" id="ui-age-badge">0 лет</div>
+        </div>
+        <div class="hero-sub" id="ui-location-line">📍 Самара · С родителями</div>
+        <div class="hero-sub" id="ui-extra-line" style="color: #93c5fd;">📱 Нет телефона · 🚶 Пешком</div>
+        <div class="hero-bottom-line">
+          <div>
+            <div class="money-pill" id="ui-money">0 ₽</div>
+            <div style="font-size: 9.5px; color: var(--muted);" id="ui-net-income">+0 ₽ / ход</div>
           </div>
-          <div style="font-size: 11px; color: var(--muted);" id="ui-status">Младенец · Семья: Средний класс</div>
+          <button class="next-turn-btn" id="btn-next-turn" onclick="nextTurn()">
+            Следующий год (+1) ➔
+          </button>
         </div>
-        <div style="text-align: right;">
-          <div class="balance-box" id="ui-money">0 ₽</div>
-          <div style="font-size: 10px; color: var(--muted); margin-top: 2px;" id="ui-income">+0 ₽ / год</div>
-        </div>
-      </div>
-
-      <!-- Прогресс года + Управление скоростью -->
-      <div class="time-controls">
-        <span style="font-size: 10px; color: var(--muted); width: 48px;" id="ui-timer-label">Год: 0%</span>
-        <div class="year-bar-bg">
-          <div class="year-bar-fill" id="ui-year-bar"></div>
-        </div>
-        <button class="speed-btn" id="spd-0" onclick="setSpeed(0)">⏸</button>
-        <button class="speed-btn" id="spd-0.5" onclick="setSpeed(0.5)">x0.5</button>
-        <button class="speed-btn active" id="spd-1" onclick="setSpeed(1)">x1</button>
-        <button class="speed-btn" id="spd-2" onclick="setSpeed(2)">x2</button>
-        <button class="speed-btn" id="spd-5" onclick="setSpeed(5)">x5</button>
       </div>
     </div>
 
     <!-- 4 шкалы характеристик -->
-    <div class="stats-bar">
-      <div class="stat-pill">
-        <div class="stat-pill-head"><span>❤️ Здор</span><span id="st-hp">100</span></div>
-        <div class="mini-bar"><div class="mini-fill" id="bar-hp" style="background: var(--red); width: 100%;"></div></div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-head"><span>❤️ Здор</span><span id="st-hp">100</span></div>
+        <div class="bar-bg"><div class="bar-fill" id="bar-hp" style="background:var(--red);width:100%;"></div></div>
       </div>
-      <div class="stat-pill">
-        <div class="stat-pill-head"><span>⚡ Бодр</span><span id="st-en">100</span></div>
-        <div class="mini-bar"><div class="mini-fill" id="bar-en" style="background: var(--gold); width: 100%;"></div></div>
+      <div class="stat-box">
+        <div class="stat-head"><span>⚡ Бодр</span><span id="st-en">100</span></div>
+        <div class="bar-bg"><div class="bar-fill" id="bar-en" style="background:var(--gold);width:100%;"></div></div>
       </div>
-      <div class="stat-pill">
-        <div class="stat-pill-head"><span>🧠 Ум</span><span id="st-iq">10</span></div>
-        <div class="mini-bar"><div class="mini-fill" id="bar-iq" style="background: var(--accent); width: 10%;"></div></div>
+      <div class="stat-box">
+        <div class="stat-head"><span>🧠 Ум</span><span id="st-iq">10</span></div>
+        <div class="bar-bg"><div class="bar-fill" id="bar-iq" style="background:var(--accent);width:10%;"></div></div>
       </div>
-      <div class="stat-pill">
-        <div class="stat-pill-head"><span>😎 Авт</span><span id="st-rep">0</span></div>
-        <div class="mini-bar"><div class="mini-fill" id="bar-rep" style="background: var(--purple); width: 5%;"></div></div>
+      <div class="stat-box">
+        <div class="stat-head"><span>😎 Авт</span><span id="st-rep">0</span></div>
+        <div class="bar-bg"><div class="bar-fill" id="bar-rep" style="background:var(--purple);width:5%;"></div></div>
       </div>
     </div>
 
-    <!-- Прокручиваемая область контента активной вкладки -->
-    <div class="scroll-area" id="tab-content"></div>
+    <!-- Контент активной вкладки -->
+    <div class="scroll-content" id="tab-area"></div>
 
-    <!-- Живая хроника (Лог) -->
-    <div class="log-strip" id="game-log"></div>
+    <!-- Лог событий -->
+    <div class="log-panel" id="log-box"></div>
 
-    <!-- Нижнее меню вкладок -->
-    <div class="bottom-nav">
-      <button class="nav-btn active" id="nav-actions" onclick="switchTab('actions')">
-        <span class="icon">⚡</span>Занятия
+    <!-- Нижнее меню (6 вкладок) -->
+    <div class="nav-bar" id="bottom-nav">
+      <button class="nav-item active" id="nav-life" onclick="openTab('life')">
+        <span class="ico">🍔</span>Жизнь
       </button>
-      <button class="nav-btn" id="nav-work" onclick="switchTab('work')">
-        <span class="icon">💼</span>Работа
+      <button class="nav-item" id="nav-work" onclick="openTab('work')">
+        <span class="ico">💼</span>Карьера
       </button>
-      <button class="nav-btn" id="nav-shop" onclick="switchTab('shop')">
-        <span class="icon">🚗</span>Магазин
+      <button class="nav-item" id="nav-shop" onclick="openTab('shop')">
+        <span class="ico">🚗</span>Авто/Дом
       </button>
-      <button class="nav-btn" id="nav-crime" onclick="switchTab('crime')">
-        <span class="icon">🔫</span>Криминал
+      <button class="nav-item" id="nav-move" onclick="openTab('move')">
+        <span class="ico">✈️</span>Переезд
       </button>
-      <button class="nav-btn" id="nav-profile" onclick="switchTab('profile')">
-        <span class="icon">🎒</span>Семья/Имущ
+      <button class="nav-item" id="nav-plates" onclick="openTab('plates')">
+        <span class="ico">🎰</span>Номера
+      </button>
+      <button class="nav-item" id="nav-family" onclick="openTab('family')">
+        <span class="ico">❤️</span>Семья
       </button>
     </div>
-  </div>
-
-  <!-- ЭКРАН 3: ИТОГ ЖИЗНИ -->
-  <div id="screen-end" class="card" style="display: none; margin: auto 0; text-align: center; padding: 20px;">
-    <div style="font-size: 44px; margin-bottom: 6px;">🪦</div>
-    <h2 style="margin-bottom: 6px;">Жизнь подошла к концу</h2>
-    <p id="end-reason" style="color: var(--red); font-size: 13px; font-weight: 700; margin-bottom: 14px;"></p>
-
-    <div style="background: var(--card-light); border-radius: 12px; padding: 14px; text-align: left; font-size: 13px; margin-bottom: 16px; line-height: 1.7;">
-      <div>👤 Имя: <b id="end-name"></b></div>
-      <div>🏠 Семья при рождении: <b id="end-family"></b></div>
-      <div>⏳ Прожито лет: <b id="end-age"></b></div>
-      <div>💰 Итоговый капитал: <b id="end-money" style="color: var(--green);"></b></div>
-      <div>🚗 Машин и квартир: <b id="end-assets"></b></div>
-      <div>😎 Авторитет в городе: <b id="end-rep"></b></div>
-    </div>
-
-    <button class="big-btn" onclick="backToMenu()">🔄 Начать новую жизнь</button>
-  </div>
-</div>
-
-<!-- Модальное окно случайных событий года -->
-<div class="modal-overlay" id="event-modal">
-  <div class="modal-card">
-    <div style="font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 4px;">🔔 СОБЫТИЕ ГОДА</div>
-    <h3 id="ev-title" style="font-size: 17px; margin-bottom: 6px;">Заголовок</h3>
-    <p id="ev-desc" style="font-size: 13px; color: var(--muted); margin-bottom: 10px;"></p>
-    <div id="ev-choices"></div>
   </div>
 </div>
 
 <script>
   const tg = window.Telegram?.WebApp;
   if (tg) { tg.ready(); tg.expand(); }
-
   function haptic(style = 'light') {
     if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred(style);
   }
 
-  // Сохранение рекордов
-  let meta = JSON.parse(localStorage.getItem('crmp_life_meta')) || { lives: 0, recordMoney: 0 };
-  function updateMetaUI() {
-    document.getElementById('meta-lives').innerText = meta.lives;
-    document.getElementById('meta-record').innerText = meta.recordMoney.toLocaleString() + ' ₽';
-  }
-  updateMetaUI();
+  let selectedGender = 'M';
+  const maleNames = ['Александр', 'Артем', 'Максим', 'Дмитрий', 'Даниил', 'Кирилл', 'Роман', 'Сергей', 'Тимур', 'Илья'];
+  const femaleNames = ['Анастасия', 'Виктория', 'Екатерина', 'Анна', 'Мария', 'Дарья', 'Алина', 'Полина', 'София', 'Елена'];
 
-  // Настройки времени
-  let baseYearSeconds = 5; // По умолчанию 1 год = 5 секунд
-  let speedMultiplier = 1; // x1, x2, x0.5, 0 (пауза)
-  let savedSpeedBeforeModal = 1;
-  let activeTab = 'actions';
-  let loopInterval = null;
-
-  function selectYearDuration(sec, btn) {
+  function selectGender(g) {
     haptic('light');
-    baseYearSeconds = sec;
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
+    selectedGender = g;
+    document.getElementById('gen-M').classList.toggle('active', g === 'M');
+    document.getElementById('gen-F').classList.toggle('active', g === 'F');
+    rollRandomName();
   }
 
-  // Справочники: Семьи, Работы, Авто, Недвижимость, Бизнесы, Криминал
-  const familyTypes = [
-    { type: 'Бедная семья с окраины', city: 'Нижний Тагил', startMoney: 100, allowance: 150, parentWealth: 'Бедные', rel: 70 },
-    { type: 'Обычная рабочая семья', city: 'Самара', startMoney: 1000, allowance: 600, parentWealth: 'Средний достаток', rel: 85 },
-    { type: 'Семья врачей и инженеров', city: 'Екатеринбург', startMoney: 3500, allowance: 1500, parentWealth: 'Обеспеченные', rel: 90 },
-    { type: 'Семья бизнесмена', city: 'Казань', startMoney: 25000, allowance: 8000, parentWealth: 'Богатые', rel: 75 },
-    { type: 'Семья олигарха с Рублевки', city: 'Москва', startMoney: 250000, allowance: 50000, parentWealth: 'Миллионеры', rel: 60 }
-  ];
+  function rollRandomName() {
+    haptic('light');
+    const pool = selectedGender === 'M' ? maleNames : femaleNames;
+    document.getElementById('inp-name').value = pool[Math.floor(Math.random() * pool.length)];
+  }
 
-  const namesList = ['Артем', 'Александр', 'Максим', 'Даниил', 'Дмитрий', 'Кирилл', 'Роман', 'Сергей', 'Илья', 'Тимур'];
+  // КАТАЛОГ ГОРОДОВ И СТРАН (с кодом региона для номеров и реальными ценами жилья)
+  const citiesCatalog = {
+    region: {
+      id: 'region', name: 'Самара', country: 'Россия 🇷🇺', regCode: '163', flag: 'RUS',
+      moveFee: 15000, salaryMult: 1.0, skyColor: '#1e293b',
+      houses: [
+        { id: 'reg_rent', name: 'Съемная однушка в хрущевке', type: 'rent', rent: 22000, price: 0, rep: 5, icon: '🏢' },
+        { id: 'reg_flat1', name: 'Своя однушка в спальном районе', type: 'buy', price: 3800000, rent: 3500, rep: 20, icon: '🏠' },
+        { id: 'reg_flat3', name: 'Трешка в ЖК «Комфорт»', type: 'buy', price: 8500000, rent: 6000, rep: 45, icon: '🏙️' },
+        { id: 'reg_house', name: 'Кирпичный коттедж на Волге', type: 'buy', price: 19500000, rent: 12000, rep: 85, icon: '🏡' }
+      ]
+    },
+    kazan: {
+      id: 'kazan', name: 'Казань', country: 'Россия 🇷🇺', regCode: '116', flag: 'RUS',
+      moveFee: 25000, salaryMult: 1.15, skyColor: '#172554',
+      houses: [
+        { id: 'kzn_rent', name: 'Аренда студии в Ново-Савиновском', type: 'rent', rent: 32000, price: 0, rep: 10, icon: '🏢' },
+        { id: 'kzn_flat', name: 'Двушка с видом на Казанку', type: 'buy', price: 9800000, rent: 5500, rep: 40, icon: '🏙️' },
+        { id: 'kzn_house', name: 'Загородный дом в Боровом', type: 'buy', price: 24000000, rent: 14000, rep: 95, icon: '🏡' }
+      ]
+    },
+    spb: {
+      id: 'spb', name: 'Санкт-Петербург', country: 'Россия 🇷🇺', regCode: '178', flag: 'RUS',
+      moveFee: 40000, salaryMult: 1.3, skyColor: '#1e1b4b',
+      houses: [
+        { id: 'spb_rent', name: 'Аренда квартиры у метро', type: 'rent', rent: 48000, price: 0, rep: 15, icon: '🏢' },
+        { id: 'spb_flat', name: 'Видовая квартира на Петроградке', type: 'buy', price: 18500000, rent: 9000, rep: 70, icon: '🏛️' },
+        { id: 'spb_pent', name: 'Пентхаус на Крестовском острове', type: 'buy', price: 55000000, rent: 25000, rep: 140, icon: '💎' }
+      ]
+    },
+    moscow: {
+      id: 'moscow', name: 'Москва', country: 'Россия 🇷🇺', regCode: '777', flag: 'RUS',
+      moveFee: 60000, salaryMult: 1.6, skyColor: '#311042',
+      houses: [
+        { id: 'msk_rent', name: 'Съемная однушка внутри МКАД', type: 'rent', rent: 80000, price: 0, rep: 25, icon: '🏢' },
+        { id: 'msk_flat', name: 'Евротрешка в ЖК бизнес-класса', type: 'buy', price: 29000000, rent: 15000, rep: 95, icon: '🏙️' },
+        { id: 'msk_city', name: 'Апартаменты в Москва-Сити', type: 'buy', price: 92000000, rent: 45000, rep: 210, icon: '🌆' },
+        { id: 'msk_rub', name: 'Резиденция на Рублевке', type: 'buy', price: 260000000, rent: 90000, rep: 400, icon: '🏰' }
+      ]
+    },
+    dubai: {
+      id: 'dubai', name: 'Дубай', country: 'ОАЭ 🇦🇪', regCode: 'DXB', flag: 'UAE',
+      moveFee: 280000, salaryMult: 2.2, skyColor: '#451a03',
+      houses: [
+        { id: 'dxb_rent', name: 'Аренда апартаментов в Dubai Marina', type: 'rent', rent: 210000, price: 0, rep: 65, icon: '🌴' },
+        { id: 'dxb_flat', name: 'Пентхаус у Burj Khalifa', type: 'buy', price: 78000000, rent: 40000, rep: 220, icon: '🏙️' },
+        { id: 'dxb_villa', name: 'Королевская вилла на Palm Jumeirah', type: 'buy', price: 340000000, rent: 110000, rep: 500, icon: '🏝️' }
+      ]
+    },
+    miami: {
+      id: 'miami', name: 'Майами', country: 'США 🇺🇸', regCode: 'MIA', flag: 'USA',
+      moveFee: 420000, salaryMult: 2.5, skyColor: '#064e3b',
+      houses: [
+        { id: 'mia_rent', name: 'Аренда кондо на Ocean Drive', type: 'rent', rent: 260000, price: 0, rep: 80, icon: '🌊' },
+        { id: 'mia_flat', name: 'Апартаменты с видом на океан', type: 'buy', price: 95000000, rent: 50000, rep: 260, icon: '🏢' },
+        { id: 'mia_mans', name: 'Особняк с яхт-пирсом на Star Island', type: 'buy', price: 420000000, rent: 140000, rep: 600, icon: '🛥️' }
+      ]
+    }
+  };
 
-  const jobsCatalog = [
-    { id: 'flier', name: 'Промоутер (Листовки)', minAge: 12, reqIq: 0, reqCar: false, salary: 18000, desc: 'Подработка для школьников после уроков' },
-    { id: 'courier', name: 'Вело-курьер доставки', minAge: 16, reqIq: 10, reqCar: false, salary: 45000, desc: 'Развоз заказов по району в любую погоду' },
-    { id: 'loader', name: 'Грузчик на складе', minAge: 18, reqIq: 10, reqCar: false, salary: 65000, desc: 'Тяжелый физический труд, но стабильно' },
-    { id: 'taxi', name: 'Водитель Такси', minAge: 18, reqIq: 20, reqCar: true, salary: 120000, desc: 'Требуется личный автомобиль в гараже' },
-    { id: 'mechanic', name: 'Автомеханик в СТО', minAge: 18, reqIq: 35, reqCar: false, salary: 150000, desc: 'Ремонт двигателей и тюнинг авто' },
-    { id: 'manager', name: 'Менеджер по продажам', minAge: 20, reqIq: 50, reqCar: false, salary: 240000, desc: 'Офисная работа и проценты со сделок' },
-    { id: 'it_dev', name: 'IT-Разработчик', minAge: 20, reqIq: 75, reqCar: false, salary: 550000, desc: 'Высокая зарплата и удаленная работа' },
-    { id: 'director', name: 'Генеральный директор холдинга', minAge: 26, reqIq: 90, reqCar: true, salary: 1400000, desc: 'Нужен высокий интеллект и личный автомобиль' }
-  ];
-
-  const bizCatalog = [
-    { id: 'shaurma', name: 'Ларек с шаурмой', price: 150000, income: 45000, desc: 'Точка у вокзала с быстрой окупаемостью' },
-    { id: 'carwash', name: 'Круглосуточная Автомойка', price: 650000, income: 180000, desc: 'Постоянный поток машин из города' },
-    { id: 'sto', name: 'Тюнинг-ателье и СТО', price: 2200000, income: 600000, desc: 'Обслуживание иномарок и спорткаров' },
-    { id: 'club', name: 'Ночной клуб «Кристалл»', price: 7500000, income: 2100000, desc: 'Элитный отдых и огромная выручка' },
-    { id: 'tk', name: 'Транспортная Компания (ТК)', price: 25000000, income: 7500000, desc: 'Собственный автопарк фур по всей стране' }
-  ];
-
+  // РЕАЛЬНЫЕ ЦЕНЫ АВТОМОБИЛЕЙ
   const carsCatalog = [
-    { id: 'vaz2107', name: 'ВАЗ-2107 «Боевая Классика»', price: 65000, rep: 5 },
-    { id: 'priora', name: 'Lada Priora (Тонированная)', price: 280000, rep: 12 },
-    { id: 'camry', name: 'Toyota Camry 3.5', price: 1800000, rep: 30 },
-    { id: 'bmwm5', name: 'BMW M5 F90 Competition', price: 7500000, rep: 65 },
-    { id: 'g63', name: 'Mercedes-AMG G63 (Гелик)', price: 16000000, rep: 100 },
-    { id: 'bugatti', name: 'Bugatti Chiron', price: 120000000, rep: 250 }
+    { id: 'vaz2107', name: 'ВАЗ-2107 Инжектор', price: 140000, rep: 5, icon: '🚗', desc: 'Первая тачка для пацана или работы в доставке' },
+    { id: 'priora', name: 'Lada Priora 1.6 MT', price: 480000, rep: 14, icon: '🚙', desc: 'Тонировка, музыка, подходит для работы в Такси' },
+    { id: 'vesta', name: 'Lada Vesta NG', price: 1550000, rep: 25, icon: '🚕', desc: 'Свежий седан для комфортной езды и таксопарка' },
+    { id: 'camry', name: 'Toyota Camry 3.5 V6', price: 3600000, rep: 50, icon: '🚘', desc: 'Надежный бизнес-седан, уважают в потоке' },
+    { id: 'bmwm5', name: 'BMW M5 F90 Competition', price: 11800000, rep: 110, icon: '🏎️', desc: '625 л.с., разгон 3.3 сек до сотни' },
+    { id: 'g63', name: 'Mercedes-AMG G63 (Гелик)', price: 24500000, rep: 200, icon: '🚓', desc: 'Символ влияния и высокого статуса' },
+    { id: 'rolls', name: 'Rolls-Royce Cullinan', price: 68000000, rep: 380, icon: '👑', desc: 'Ультимативная роскошь мирового уровня' },
+    { id: 'chiron', name: 'Bugatti Chiron Sport', price: 240000000, rep: 700, icon: '🚀', desc: 'Гиперкар для покорителей Дубая и Майами' }
   ];
 
-  const housesCatalog = [
-    { id: 'dorm', name: 'Комната в общежитии', price: 350000, rep: 5 },
-    { id: 'flat1', name: 'Однушка в спальном районе', price: 2400000, rep: 20 },
-    { id: 'flat_center', name: 'Просторная трешка в центре', price: 8500000, rep: 50 },
-    { id: 'cottage', name: 'Загородный коттедж с баней', price: 22000000, rep: 90 },
-    { id: 'mansion', name: 'Особняк на Рублевке', price: 95000000, rep: 200 }
+  // РАБОТЫ (реалистичные зарплаты в месяц)
+  const jobsCatalog = [
+    { id: 'flyers', name: 'Раздача листовок у ТЦ', minAge: 12, reqIq: 0, reqCar: false, pay: 14000, icon: '📄' },
+    { id: 'courier', name: 'Курьер доставки еды', minAge: 14, reqIq: 10, reqCar: false, pay: 34000, icon: '🎒' },
+    { id: 'barista', name: 'Бариста в кофейне', minAge: 16, reqIq: 20, reqCar: false, pay: 48000, icon: '☕' },
+    { id: 'taxi', name: 'Водитель Такси (Нужно авто)', minAge: 18, reqIq: 25, reqCar: true, pay: 92000, icon: '🚖' },
+    { id: 'mechanic', name: 'Мастер приемщик в СТО', minAge: 18, reqIq: 40, reqCar: false, pay: 125000, icon: '🔧' },
+    { id: 'lawyer', name: 'Корпоративный юрист', minAge: 18, reqIq: 65, reqCar: false, pay: 210000, icon: '⚖️' },
+    { id: 'it_lead', name: 'Senior IT-Разработчик', minAge: 18, reqIq: 85, reqCar: false, pay: 390000, icon: '💻' },
+    { id: 'ceo', name: 'Топ-менеджер холдинга', minAge: 18, reqIq: 95, reqCar: true, pay: 780000, icon: '🏛️' }
   ];
 
-  let p = null; // Объект игрока
+  // БИЗНЕСЫ (реальные вложения и окупаемость ~14-18 месяцев)
+  const bizCatalog = [
+    { id: 'coffee_point', name: 'Кофейный островок', price: 450000, profit: 32000, icon: '☕', desc: 'Точка с кофе с собой в бизнес-центре' },
+    { id: 'shaurma', name: 'Круглосуточная Шаурмичная', price: 1400000, profit: 95000, icon: '🌯', desc: 'Стабильный поток клиентов у метро' },
+    { id: 'carwash', name: 'Детейлинг и Автомойка', price: 5200000, profit: 340000, icon: '🚿', desc: 'Мойка и полировка автомобилей на 4 поста' },
+    { id: 'rest', name: 'Сеть ресторанов', price: 24000000, profit: 1550000, icon: '🍽️', desc: 'Премиальные заведения в центре города' },
+    { id: 'tk', name: 'Транспортная компания (Фуры)', price: 75000000, profit: 4800000, icon: '🚛', desc: 'Междугородняя логистика и автопарк тягачей' },
+    { id: 'dev_corp', name: 'Строительный Холдинг (ЖК)', price: 280000000, profit: 18500000, icon: '🏗️', desc: 'Застройка жилых кварталов и небоскребов' }
+  ];
 
-  function startNewLife() {
+  // СЕМЬИ ПРИ РОЖДЕНИИ
+  const startFamilies = [
+    { title: 'Небогатая рабочая семья', allowance: 1500, startCash: 500, rel: 80 },
+    { title: 'Обычная семья среднего класса', allowance: 4000, startCash: 3000, rel: 85 },
+    { title: 'Семья врачей и преподавателей', allowance: 7500, startCash: 10000, rel: 90 },
+    { title: 'Обеспеченная семья предпринимателей', allowance: 20000, startCash: 50000, rel: 75 }
+  ];
+
+  let p = null; // Состояние игрока
+  let currentTab = 'life';
+
+  function startGame() {
     haptic('medium');
-    const fam = familyTypes[Math.floor(Math.random() * familyTypes.length)];
-    const name = namesList[Math.floor(Math.random() * namesList.length)];
+    const nameInput = document.getElementById('inp-name').value.trim() || 'Александр';
+    const fam = startFamilies[Math.floor(Math.random() * startFamilies.length)];
 
     p = {
-      name: name,
+      name: nameInput,
+      gender: selectedGender,
       age: 0,
-      yearProgress: 0,
+      adultMonths: 0, // Счетчик месяцев после 18 лет (без старения до смерти!)
+      cityId: 'region',
+      livingWithParents: true,
+      currentHouse: null, // Объект арендованного или купленного жилья
+      ownedHouses: [],
       family: { ...fam },
-      money: fam.startMoney,
+      money: fam.startCash,
       hp: 100,
       en: 100,
-      iq: 10 + Math.floor(Math.random() * 10),
+      iq: 12,
       rep: 0,
-      wanted: 0,
-      jailYears: 0,
+      jailMonths: 0,
+      crimeDoneThisTurn: false,
+      tools: { lockpick: false, scanner: false, heistPlan: false },
       job: null,
       cars: [],
-      houses: [],
+      activePlate: null,
+      savedPlates: [],
+      phone: null,
       businesses: [],
-      alive: true
+      partner: null, // { name, rel, married, icon }
+      children: []   // [{ name, ageMonths }]
     };
 
-    document.getElementById('screen-start').style.display = 'none';
-    document.getElementById('screen-end').style.display = 'none';
-    document.getElementById('screen-game').style.display = 'flex';
-    document.getElementById('game-log').innerHTML = '';
+    document.getElementById('screen-create').style.display = 'none';
+    document.getElementById('screen-main').style.display = 'flex';
+    document.getElementById('log-box').innerHTML = '';
 
-    log(`👶 Ты родился в г. ${p.family.city}! Семья: ${p.family.type}.`);
-    setSpeed(1);
-    switchTab('actions');
-    updateHeaderUI();
-
-    if (loopInterval) clearInterval(loopInterval);
-    loopInterval = setInterval(gameTick, 100); // Тик каждые 100 мс
+    addLog(`👶 Ты родился в г. Самара! Семья: ${p.family.title}. До 18 лет развивай характеристики и готовься ко взрослой жизни!`);
+    refreshAllUI();
   }
 
-  function setSpeed(mult) {
-    haptic('light');
-    speedMultiplier = mult;
-    ['0', '0.5', '1', '2', '5'].forEach(id => {
-      const btn = document.getElementById('spd-' + id);
-      if (btn) btn.classList.toggle('active', parseFloat(id) === mult);
-    });
-  }
+  // ГЕНЕРАЦИЯ SVG-АВАТАРА ПЕРСОНАЖА (пол, возраст, статус, тюрьма)
+  function renderCharacterSVG() {
+    const city = citiesCatalog[p.cityId];
+    const isJail = p.jailMonths > 0;
+    const bg = isJail ? '#1f2937' : city.skyColor;
 
-  function getYearlyIncome() {
-    let total = 0;
-    if (p.age >= 6 && p.age < 18 && p.jailYears === 0) total += p.family.allowance;
-    if (p.job && p.jailYears === 0) total += p.job.salary;
-    p.businesses.forEach(b => total += b.income);
-    return total;
-  }
+    // Прическа и одежда по возрасту/полу/богатству
+    const skin = '#f1c27d';
+    const hairColor = p.gender === 'M' ? '#2c1b18' : '#5c3317';
 
-  // Реал-тайм игровой цикл (10 раз в секунду)
-  function gameTick() {
-    if (!p || !p.alive || speedMultiplier === 0) return;
+    let bodySvg = '';
+    if (p.age <= 3) {
+      // Младенец с соской
+      bodySvg = `
+        <ellipse cx="39" cy="68" rx="22" ry="18" fill="${p.gender === 'M' ? '#60a5fa' : '#f472b6'}"/>
+        <circle cx="39" cy="40" r="16" fill="${skin}"/>
+        <circle cx="34" cy="38" r="2" fill="#111"/>
+        <circle cx="44" cy="38" r="2" fill="#111"/>
+        <circle cx="39" cy="45" r="4" fill="#ef4444" stroke="#fff" stroke-width="1.5"/>
+      `;
+    } else {
+      // Ребенок / Подросток / Взрослый
+      let shirtColor = p.gender === 'M' ? '#3b82f6' : '#ec4899';
+      let suitOverlay = '';
 
-    const stepPerTick = (10 / baseYearSeconds) * speedMultiplier;
-    p.yearProgress += stepPerTick;
-
-    // Плавное начисление дохода и регенерация бодрости каждую долю секунды
-    const incomePerTick = (getYearlyIncome() / (baseYearSeconds * 10)) * speedMultiplier;
-    if (incomePerTick > 0) p.money += incomePerTick;
-
-    p.en = Math.min(100, p.en + (0.35 * speedMultiplier));
-
-    if (p.yearProgress >= 100) {
-      p.yearProgress = 0;
-      advanceOneYear();
-    }
-
-    updateHeaderUI();
-  }
-
-  function advanceOneYear() {
-    p.age += 1;
-
-    // Если в тюрьме
-    if (p.jailYears > 0) {
-      p.jailYears -= 1;
-      p.hp = Math.max(10, p.hp - 4);
-      if (p.jailYears === 0) {
-        log(`🔓 Ты вышел на свободу! Пора начинать новую главу.`);
-      } else {
-        log(`⛓ Идет срок в колонии. Осталось сидеть: ${p.jailYears} г.`);
+      if (isJail) {
+        shirtColor = '#374151';
+        suitOverlay = `<line x1="20" y1="62" x2="58" y2="62" stroke="#f3f4f6" stroke-width="3"/><line x1="20" y1="70" x2="58" y2="70" stroke="#f3f4f6" stroke-width="3"/>`;
+      } else if (p.money >= 15000000 || p.rep >= 150) {
+        // Люкс костюм + золотая цепь
+        shirtColor = '#111827';
+        suitOverlay = `<path d="M31 54 Q39 66 47 54" fill="none" stroke="#f59e0b" stroke-width="2.5"/>`;
+      } else if (p.age >= 18) {
+        shirtColor = '#1e40af';
       }
+
+      const hairSvg = p.gender === 'M'
+        ? `<path d="M22 34 Q39 16 56 34 Q54 22 39 22 Q24 22 22 34 Z" fill="${hairColor}"/>`
+        : `<path d="M20 48 Q20 18 39 18 Q58 18 58 48 L53 48 Q52 28 39 28 Q26 28 25 48 Z" fill="${hairColor}"/>`;
+
+      const glassesSvg = (!isJail && (p.money >= 30000000 || p.rep >= 200))
+        ? `<rect x="27" y="33" width="10" height="6" rx="1" fill="#111"/><rect x="41" y="33" width="10" height="6" rx="1" fill="#111"/><line x1="37" y1="36" x2="41" y2="36" stroke="#f59e0b" stroke-width="1.5"/>`
+        : `<circle cx="33" cy="36" r="2" fill="#111"/><circle cx="45" cy="36" r="2" fill="#111"/>`;
+
+      bodySvg = `
+        <path d="M16 78 Q18 52 39 52 Q60 52 62 78 Z" fill="${shirtColor}"/>
+        ${suitOverlay}
+        <circle cx="39" cy="37" r="15" fill="${skin}"/>
+        ${hairSvg}
+        ${glassesSvg}
+        <path d="M34 44 Q39 48 44 44" fill="none" stroke="#8d5524" stroke-width="1.8" stroke-linecap="round"/>
+      `;
     }
 
-    // Снижение розыска со временем
-    if (p.wanted > 0 && Math.random() < 0.4) p.wanted -= 1;
+    // Решетка если в тюрьме
+    const jailBars = isJail ? `
+      <line x1="16" y1="0" x2="16" y2="78" stroke="#9ca3af" stroke-width="3"/>
+      <line x1="39" y1="0" x2="39" y2="78" stroke="#9ca3af" stroke-width="3"/>
+      <line x1="62" y1="0" x2="62" y2="78" stroke="#9ca3af" stroke-width="3"/>
+    ` : '';
 
-    // Возрастные вехи
-    if (p.age === 7) log(`🎒 Тебе исполнилось 7 лет! Ты пошел в школу, открылись новые действия.`);
-    if (p.age === 14) log(`🪪 14 лет! Ты получил паспорт и можешь устраиваться на первые подработки.`);
-    if (p.age === 18) log(`🎉 18 лет! Совершеннолетие: открыты все работы, автосалон, бизнесы и взрослая жизнь!`);
+    return `
+      <svg width="78" height="78" viewBox="0 0 78 78" xmlns="http://www.w3.org/2000/svg">
+        <rect width="78" height="78" fill="${bg}"/>
+        <circle cx="65" cy="14" r="6" fill="rgba(255,255,255,0.18)"/>
+        ${bodySvg}
+        ${jailBars}
+      </svg>
+    `;
+  }
 
-    // Естественное старение после 55 лет
-    if (p.age > 55) {
-      p.hp -= Math.floor((p.age - 50) * 0.6);
+  // РАСЧЕТ ДОХОДА И РАСХОДОВ ЗА ХОД
+  function calculateTurnCashflow() {
+    if (p.jailMonths > 0) return 0;
+    const city = citiesCatalog[p.cityId];
+
+    // Доход до 18 лет (карманные от родителей за год)
+    if (p.age < 18) {
+      let teenIncome = p.age >= 6 ? p.family.allowance : 0;
+      if (p.job) teenIncome += p.job.pay;
+      return teenIncome;
     }
 
-    // Проверка смерти
-    if (p.hp <= 0 || (p.age > 75 && Math.random() < (p.age - 70) * 0.04)) {
-      die(p.hp <= 0 ? 'Остановка сердца из-за подорванного здоровья' : 'Глубокая старость');
+    // Взрослая жизнь 18+ (расчет за 1 месяц)
+    let income = 0;
+    if (p.job) income += Math.round(p.job.pay * city.salaryMult);
+    p.businesses.forEach(b => income += Math.round(b.profit * city.salaryMult));
+
+    // Расходы на жилье и детей
+    let expenses = 0;
+    if (p.currentHouse) expenses += p.currentHouse.rent;
+    expenses += p.children.length * 15000;
+
+    return income - expenses;
+  }
+
+  // ПЕРЕХОД НА СЛЕДУЮЩИЙ ХОД (До 18 лет = +1 год, После 18 лет = +1 месяц взрослой жизни)
+  function nextTurn() {
+    haptic('medium');
+    p.crimeDoneThisTurn = false;
+
+    // Если персонаж сидит в тюрьме
+    if (p.jailMonths > 0) {
+      p.jailMonths -= 1;
+      p.en = 100;
+      p.hp = Math.max(15, p.hp - 3);
+      if (p.jailMonths === 0) {
+        addLog(`🔓 Срок окончен! Ты вышел на свободу.`);
+      } else {
+        addLog(`⛓ Прошел месяц в колонии. Осталось сидеть: ${p.jailMonths} мес.`);
+      }
+      refreshAllUI();
       return;
     }
 
-    // Случайное жизненное событие (с шансом 28% каждый год после 6 лет)
-    if (p.age >= 6 && p.jailYears === 0 && Math.random() < 0.28) {
-      triggerRandomEvent();
+    const netCash = calculateTurnCashflow();
+    p.money += netCash;
+    p.en = 100; // Восстановление бодрости каждый ход
+
+    if (p.age < 18) {
+      p.age += 1;
+      if (p.age === 7) addLog(`🎒 Тебе исполнилось 7 лет! Ты пошел в школу, родители начали давать карманные деньги.`);
+      if (p.age === 14) addLog(`🪪 14 лет! Ты получил паспорт: открыты первые подработки и свидания.`);
+      if (p.age === 18) {
+        addLog(`🎉 18 ЛЕТ! Ты вступил во взрослую самостоятельную жизнь! Теперь время идет помесячно без старения и смерти.`);
+      }
+    } else {
+      p.adultMonths += 1;
+      // Взросление детей
+      p.children.forEach(ch => ch.ageMonths += 1);
+      if (p.money < 0) {
+        p.hp = Math.max(10, p.hp - 10);
+        addLog(`⚠️ Долги по счетам! Срочно найди работу или сократи расходы на аренду.`);
+      }
     }
 
-    renderActiveTab();
+    refreshAllUI();
   }
 
-  function updateHeaderUI() {
+  function refreshAllUI() {
     if (!p) return;
-    document.getElementById('ui-name').innerText = p.name;
-    document.getElementById('ui-age').innerText = `${p.age} лет`;
-    document.getElementById('ui-wanted').innerText = p.wanted > 0 ? '⭐'.repeat(p.wanted) : '';
+    document.getElementById('avatar-svg-box').innerHTML = renderCharacterSVG();
+    document.getElementById('ui-char-name').innerText = p.name;
 
-    let stage = 'Младенец';
-    if (p.jailYears > 0) stage = `В тюрьме (${p.jailYears} г.)`;
-    else if (p.job) stage = p.job.name;
-    else if (p.age >= 18) stage = 'Безработный';
-    else if (p.age >= 7) stage = 'Школьник';
-    else if (p.age >= 3) stage = 'Детский сад';
+    // Отображение возраста (до 18 лет — возраст, после 18 — 18+ и стаж в месяцах)
+    if (p.jailMonths > 0) {
+      document.getElementById('ui-age-badge').innerText = `⛓ Срок: ${p.jailMonths} мес.`;
+    } else if (p.age < 18) {
+      document.getElementById('ui-age-badge').innerText = `${p.age} лет (Юность)`;
+    } else {
+      const years = Math.floor(p.adultMonths / 12);
+      const months = p.adultMonths % 12;
+      document.getElementById('ui-age-badge').innerText = `18+ (Стаж: ${years > 0 ? years + 'г ' : ''}${months}м)`;
+    }
 
-    document.getElementById('ui-status').innerText = `${stage} · г. ${p.family.city}`;
+    const city = citiesCatalog[p.cityId];
+    const houseName = p.livingWithParents ? 'С родителями' : (p.currentHouse ? p.currentHouse.name : 'Без жилья');
+    document.getElementById('ui-location-line').innerText = `📍 ${city.name} (${city.regCode}) · ${houseName}`;
+
+    const phoneTxt = p.phone ? `📱 ${p.phone.num}` : '📱 Нет SIM';
+    const carTxt = p.cars.length > 0
+      ? `🚗 ${p.cars[p.cars.length - 1].name} ${p.activePlate ? '[' + p.activePlate.text + ']' : ''}`
+      : '🚶 Пешком';
+    document.getElementById('ui-extra-line').innerText = `${phoneTxt} · ${carTxt}`;
+
     document.getElementById('ui-money').innerText = `${Math.floor(p.money).toLocaleString()} ₽`;
-    document.getElementById('ui-income').innerText = `+${getYearlyIncome().toLocaleString()} ₽ / год`;
+    const flow = calculateTurnCashflow();
+    const unit = p.age < 18 ? 'год' : 'мес';
+    document.getElementById('ui-net-income').innerText = `${flow >= 0 ? '+' : ''}${flow.toLocaleString()} ₽ / ${unit}`;
 
-    document.getElementById('ui-timer-label').innerText = `Год: ${Math.floor(p.yearProgress)}%`;
-    document.getElementById('ui-year-bar').style.width = `${p.yearProgress}%`;
+    const turnBtn = document.getElementById('btn-next-turn');
+    if (p.jailMonths > 0) {
+      turnBtn.innerText = 'Отбыть 1 мес. ⛓';
+      turnBtn.className = 'next-turn-btn jail-btn';
+    } else if (p.age < 18) {
+      turnBtn.innerText = 'След. год (+1) ➔';
+      turnBtn.className = 'next-turn-btn';
+    } else {
+      turnBtn.innerText = 'След. месяц ➔';
+      turnBtn.className = 'next-turn-btn';
+    }
 
+    // Статы
     document.getElementById('st-hp').innerText = Math.round(p.hp);
     document.getElementById('bar-hp').style.width = `${Math.max(0, Math.min(100, p.hp))}%`;
 
@@ -707,516 +872,796 @@
     document.getElementById('bar-iq').style.width = `${Math.max(0, Math.min(100, p.iq))}%`;
 
     document.getElementById('st-rep').innerText = Math.round(p.rep);
-    document.getElementById('bar-rep').style.width = `${Math.max(5, Math.min(100, p.rep))}%`;
+    document.getElementById('bar-rep').style.width = `${Math.max(5, Math.min(100, p.rep / 3))}%`;
+
+    renderActiveTab();
   }
 
-  function log(msg) {
-    const box = document.getElementById('game-log');
+  function addLog(text) {
+    const box = document.getElementById('log-box');
     const div = document.createElement('div');
-    div.innerHTML = `<span style="color:var(--gold);">[${p.age} л.]</span> ${msg}`;
+    const tag = p.age < 18 ? `${p.age} л.` : `Мес. ${p.adultMonths}`;
+    div.innerHTML = `<span style="color:var(--gold);font-weight:700;">[${tag}]</span> ${text}`;
     box.prepend(div);
   }
 
-  function switchTab(tab) {
+  function openTab(tab) {
     haptic('light');
-    activeTab = tab;
-    ['actions', 'work', 'shop', 'crime', 'profile'].forEach(t => {
+    currentTab = tab;
+    ['life', 'work', 'shop', 'move', 'plates', 'family'].forEach(t => {
       document.getElementById('nav-' + t).classList.toggle('active', t === tab);
     });
     renderActiveTab();
   }
 
-  // Отрисовка активной вкладки
+  // ВОЗРАСТНОЕ ПИТАНИЕ (Для каждого возраста своя логичная еда!)
+  function getAgeFoods() {
+    if (p.age <= 3) {
+      return [
+        { name: 'Молочная смесь в бутылочке', cost: 0, en: 40, hp: 5, icon: '🍼', desc: 'Бесплатно от мамы' },
+        { name: 'Фруктовое пюре «Агуша»', cost: 120, en: 60, hp: 10, icon: '🍎', desc: 'Вкусное детское питание' }
+      ];
+    } else if (p.age <= 6) {
+      return [
+        { name: 'Манная каша и какао', cost: 0, en: 35, hp: 5, icon: '🥣', desc: 'Домашний завтрак от родителей' },
+        { name: 'Сок и Киндер-сюрприз', cost: 250, en: 55, hp: 8, icon: '🍫', desc: 'Радость любого дошкольника' }
+      ];
+    } else if (p.age <= 13) {
+      return [
+        { name: 'Обед в школьной столовой', cost: 180, en: 40, hp: 6, icon: '🍲', desc: 'Котлета с пюрешкой и компот' },
+        { name: 'Пицца и лимонад в кафе', cost: 650, en: 70, hp: 10, icon: '🍕', desc: 'Перекус после уроков с друзьями' }
+      ];
+    } else if (p.age <= 17) {
+      return [
+        { name: 'Шаурма и банка энергетика', cost: 450, en: 55, hp: 2, icon: '🌯', desc: 'Классика подросткового перекуса' },
+        { name: 'Большой бургер-комбо', cost: 850, en: 75, hp: 8, icon: '🍔', desc: 'Сытный обед в ТЦ' }
+      ];
+    } else {
+      return [
+        { name: 'Комплексный бизнес-ланч', cost: 750, en: 45, hp: 8, icon: '🍱', desc: 'Обед в перерыве между делами' },
+        { name: 'Стейк Рибай в ресторане', cost: 4500, en: 85, hp: 20, icon: '🥩', desc: 'Премиальная кухня и отличный отдых' },
+        { name: 'Дегустационный сет Мишлен', cost: 25000, en: 100, hp: 35, icon: '🦞', desc: 'Элитный ужин (+3 Авторитета)' }
+      ];
+    }
+  }
+
+  // ОТРИСОВКА АКТИВНОЙ ВКЛАДКИ (Или экрана Тюрьмы, если персонаж заключен)
   function renderActiveTab() {
-    const container = document.getElementById('tab-content');
+    const area = document.getElementById('tab-area');
     if (!p) return;
 
-    if (activeTab === 'actions') {
-      let html = `<div class="section-title">⚡ Быстрое восстановление (В любое время)</div>`;
-      html += `
-        <div class="action-item">
-          <div class="action-info"><h4>🌯 Перекусить шаурмой и энергетиком</h4><p>+35 Бодрости, +5 Здоровья</p></div>
-          <button class="act-btn gold" onclick="quickEat(250)">250 ₽</button>
+    // БЛОКИРОВКА ДЕЙСТВИЙ В ТЮРЬМЕ!
+    if (p.jailMonths > 0) {
+      const lawyerCost = p.jailMonths * 45000;
+      area.innerHTML = `
+        <div class="card" style="border-color: var(--red); background: rgba(239,68,68,0.08);">
+          <h3 style="font-size:15px; color:var(--red); margin-bottom:4px;">⛓ ВЫ НАХОДИТЕСЬ В КОЛОНИИ</h3>
+          <p style="font-size:12px; color:var(--muted);">
+            Все городские магазины, угоны, ограбления и переезды заблокированы до выхода на свободу. Осталось сидеть: <b>${p.jailMonths} мес.</b>
+          </p>
         </div>
-        <div class="action-item">
-          <div class="action-info"><h4>🏥 Пройти курс лечения в клинике</h4><p>Восстанавливает +40 Здоровья</p></div>
-          <button class="act-btn green" onclick="healClinic(3000)">3 000 ₽</button>
+
+        <div class="cat-title">🥣 Тюремный паёк и ларёк</div>
+        <div class="item-card">
+          <div class="item-thumb">🥣</div>
+          <div class="item-body"><h4>Казенная баланда в столовой</h4><p>+30 Бодрости · Бесплатно для осужденных</p></div>
+          <button class="btn-act" onclick="eatFood(0, 30, 0, 'Поел в тюремной столовой.')">Съесть</button>
+        </div>
+        <div class="item-card">
+          <div class="item-thumb">☕</div>
+          <div class="item-body"><h4>Крепкий чай и лапша из ларька ФСИН</h4><p>+65 Бодрости, +5 Здоровья</p></div>
+          <button class="btn-act gold" onclick="eatFood(600, 65, 5, 'Купил продукты в тюремном ларьке.')">600 ₽</button>
+        </div>
+
+        <div class="cat-title">🔨 Занятия в заключении</div>
+        <div class="item-card">
+          <div class="item-thumb">🧵</div>
+          <div class="item-body"><h4>Смена в швейном цехе</h4><p>Заработок +4 500 ₽, -35 Бодрости</p></div>
+          <button class="btn-act green" onclick="prisonAct(35, () => { p.money += 4500; addLog('Отработал смену в швейном цехе (+4 500 ₽).'); })">Работать</button>
+        </div>
+        <div class="item-card">
+          <div class="item-thumb">💪</div>
+          <div class="item-body"><h4>Тренировка на брусьях во дворике</h4><p>+5 Здоровья, +3 Авторитета, -30 Бодрости</p></div>
+          <button class="btn-act" onclick="prisonAct(30, () => { p.hp = Math.min(100, p.hp+5); p.rep += 3; addLog('Качался в тюремном дворике (+3 Авт).'); })">Качаться</button>
+        </div>
+        <div class="item-card">
+          <div class="item-thumb">📖</div>
+          <div class="item-body"><h4>Чтение книг в тюремной библиотеке</h4><p>+3 Ума, -25 Бодрости</p></div>
+          <button class="btn-act" onclick="prisonAct(25, () => { p.iq = Math.min(100, p.iq+3); addLog('Изучал кодексы в библиотеке (+3 Ума).'); })">Читать</button>
+        </div>
+
+        <div class="cat-title">⚖️ Досрочное освобождение (УДО)</div>
+        <div class="item-card">
+          <div class="item-thumb">👨‍⚖️</div>
+          <div class="item-body"><h4>Нанять лучшего адвоката для УДО</h4><p>Мгновенный выход на свободу (45 000 ₽ за каждый месяц срока)</p></div>
+          <button class="btn-act gold" onclick="payParole(${lawyerCost})">${lawyerCost.toLocaleString()} ₽</button>
         </div>
       `;
+      return;
+    }
 
-      html += `<div class="section-title">🎯 Действия по возрасту (${p.age} лет)</div>`;
+    // ВКЛАДКА 1: ЖИЗНЬ (Питание по возрасту, развитие, медицина)
+    if (currentTab === 'life') {
+      const foods = getAgeFoods();
+      let html = `<div class="cat-title">🍽️ Питание по возрасту (${p.age < 18 ? p.age + ' лет' : '18+ Взрослый'})</div>`;
+      foods.forEach(f => {
+        html += `
+          <div class="item-card">
+            <div class="item-thumb">${f.icon}</div>
+            <div class="item-body">
+              <h4>${f.name}</h4>
+              <p>${f.desc} · <b>+${f.en} ⚡ Бодр</b>, +${f.hp} ❤️ Здор</p>
+            </div>
+            <button class="btn-act ${f.cost === 0 ? 'green' : 'gold'}" onclick="eatFood(${f.cost}, ${f.en}, ${f.hp}, 'Поел: ${f.name}')">
+              ${f.cost === 0 ? 'Бесплатно' : f.cost.toLocaleString() + ' ₽'}
+            </button>
+          </div>
+        `;
+      });
+
+      html += `<div class="cat-title">📚 Саморазвитие и Здоровье</div>`;
       if (p.age < 7) {
         html += `
-          <div class="action-item">
-            <div class="action-info"><h4>🧸 Играть с развивающими кубиками</h4><p>+2 Ума, -15 Бодрости</p></div>
-            <button class="act-btn" onclick="doAct(15, () => { p.iq += 2; log('Ты сложил пирамидку и стал умнее!'); })">Играть</button>
-          </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🍼 Выпросить вкусняшку у мамы</h4><p>+5 Здоровья, +200 ₽ в копилку</p></div>
-            <button class="act-btn" onclick="doAct(20, () => { p.hp = Math.min(100, p.hp+5); p.money += 200; log('Родители дали мелочь в детскую копилку!'); })">Просить</button>
+          <div class="item-card">
+            <div class="item-thumb">🧩</div>
+            <div class="item-body"><h4>Развивающие игры и кубики</h4><p>+3 Ума, -25 Бодрости</p></div>
+            <button class="btn-act" onclick="useEnergy(25, () => { p.iq = Math.min(100, p.iq+3); addLog('Развивал мышление с малых лет (+3 Ума).'); })">Играть</button>
           </div>
         `;
       } else if (p.age < 18) {
         html += `
-          <div class="action-item">
-            <div class="action-info"><h4>📚 Усердно учиться в школе</h4><p>+4 Ума, -20 Бодрости</p></div>
-            <button class="act-btn" onclick="doAct(20, () => { p.iq += 4; log('Получил пятерку на контрольной (+4 Ума).'); })">Учиться</button>
+          <div class="item-card">
+            <div class="item-thumb">📐</div>
+            <div class="item-body"><h4>Учить уроки и готовиться к олимпиадам</h4><p>+4 Ума, -30 Бодрости</p></div>
+            <button class="btn-act" onclick="useEnergy(30, () => { p.iq = Math.min(100, p.iq+4); addLog('Отлично позанимался учебой (+4 Ума).'); })">Учиться</button>
           </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🧽 Помыть фары машинам на светофоре</h4><p>Заработок 300–900 ₽, -25 Бодрости</p></div>
-            <button class="act-btn green" onclick="doAct(25, () => { let m = 300 + Math.floor(Math.random()*600); p.money += m; log('Водитель дал на чай ' + m + ' ₽ за чистые фары!'); })">Заработать</button>
-          </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🥊 Тренироваться на турниках во дворе</h4><p>+3 Здоровья, +2 Авторитета, -20 Бодрости</p></div>
-            <button class="act-btn" onclick="doAct(20, () => { p.hp = Math.min(100, p.hp+3); p.rep += 2; log('Подтянулся 20 раз перед пацанами (+2 Авт).'); })">Тренировка</button>
+          <div class="item-card">
+            <div class="item-thumb">🥊</div>
+            <div class="item-body"><h4>Секция бокса / Турники во дворе</h4><p>+5 Здоровья, +2 Авторитета, -30 Бодрости</p></div>
+            <button class="btn-act" onclick="useEnergy(30, () => { p.hp = Math.min(100, p.hp+5); p.rep += 2; addLog('Потренировался на секции (+2 Авт).'); })">Тренировка</button>
           </div>
         `;
       } else {
         html += `
-          <div class="action-item">
-            <div class="action-info"><h4>🎓 Пройти профессиональные курсы</h4><p>+6 Ума, стоит 5 000 ₽, -25 Бодрости</p></div>
-            <button class="act-btn" onclick="studyAdult()">5 000 ₽</button>
+          <div class="item-card">
+            <div class="item-thumb">🎓</div>
+            <div class="item-body"><h4>Курсы MBA / Академия программирования</h4><p>+6 Ума · Открывает высокооплачиваемые должности (-35 ⚡)</p></div>
+            <button class="btn-act" onclick="paidAction(15000, 35, () => { p.iq = Math.min(100, p.iq+6); addLog('Прошел обучение на курсах (+6 Ума).'); })">15 000 ₽</button>
           </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🏋️‍♂️ Сходить в элитный спортзал</h4><p>+8 Здоровья, +3 Авторитета, -25 Бодрости</p></div>
-            <button class="act-btn" onclick="gymAdult()">1 500 ₽</button>
+          <div class="item-card">
+            <div class="item-thumb">🏋️</div>
+            <div class="item-body"><h4>Фитнес-клуб премиум класса</h4><p>+12 Здоровья, +3 Авторитета (-30 ⚡)</p></div>
+            <button class="btn-act" onclick="paidAction(3500, 30, () => { p.hp = Math.min(100, p.hp+12); p.rep += 3; addLog('Провел тренировку в фитнес-клубе.'); })">3 500 ₽</button>
           </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🎰 Сыграть в подпольном казино (Рулетка x2)</h4><p>Шанс удвоить ставку 10 000 ₽ или проиграть</p></div>
-            <button class="act-btn gold" onclick="playCasino(10000)">Ставка 10к ₽</button>
+          <div class="item-card">
+            <div class="item-thumb">🏥</div>
+            <div class="item-body"><h4>Полный чекап и лечение в частной клинике</h4><p>Восстанавливает +45 ❤️ Здоровья</p></div>
+            <button class="btn-act green" onclick="paidAction(12000, 10, () => { p.hp = Math.min(100, p.hp+45); addLog('Поправил здоровье в частной клинике.'); })">12 000 ₽</button>
           </div>
         `;
       }
-      container.innerHTML = html;
+      area.innerHTML = html;
     }
 
-    else if (activeTab === 'work') {
-      let html = `<div class="section-title">💼 Официальная работа и карьера</div>`;
+    // ВКЛАДКА 2: КАРЬЕРА, БИЗНЕС И ПРОДУМАННЫЙ КРИМИНАЛ
+    else if (currentTab === 'work') {
+      const city = citiesCatalog[p.cityId];
+      let html = `<div class="cat-title">💼 Официальная карьера (Коэфф. г. ${city.name}: x${city.salaryMult})</div>`;
       jobsCatalog.forEach(j => {
-        const isCurrent = p.job && p.job.id === j.id;
-        const canApply = p.age >= j.minAge && p.iq >= j.reqIq && (!j.reqCar || p.cars.length > 0);
+        const realPay = Math.round(j.pay * city.salaryMult);
+        const isMyJob = p.job && p.job.id === j.id;
+        const ok = p.age >= j.minAge && p.iq >= j.reqIq && (!j.reqCar || p.cars.length > 0);
         html += `
-          <div class="action-item">
-            <div class="action-info">
-              <h4>${j.name} ${isCurrent ? '✅' : ''}</h4>
-              <p>Зарплата: <b style="color:var(--green)">${j.salary.toLocaleString()} ₽/год</b> · Мин. возраст: ${j.minAge} л., Ум: ${j.reqIq}${j.reqCar ? ', Авто 🚗' : ''}</p>
+          <div class="item-card">
+            <div class="item-thumb">${j.icon}</div>
+            <div class="item-body">
+              <h4>${j.name} ${isMyJob ? '✅' : ''}</h4>
+              <p>Оклад: <b style="color:var(--green)">${realPay.toLocaleString()} ₽/ход</b> · С ${j.minAge} л., Ум ${j.reqIq}${j.reqCar ? ', Авто 🚗' : ''}</p>
             </div>
-            <button class="act-btn ${isCurrent ? 'gold' : ''}" ${(!canApply || isCurrent) ? 'disabled' : ''} onclick="takeJob('${j.id}')">
-              ${isCurrent ? 'Работаешь' : 'Устроиться'}
+            <button class="btn-act ${isMyJob ? 'gold' : ''}" ${(!ok || isMyJob) ? 'disabled' : ''} onclick="hireJob('${j.id}')">
+              ${isMyJob ? 'Устроен' : 'Устроиться'}
             </button>
           </div>
         `;
       });
 
-      html += `<div class="section-title">🏪 Покупка бизнеса (Пассивный доход)</div>`;
-      bizCatalog.forEach(b => {
-        const count = p.businesses.filter(x => x.id === b.id).length;
-        html += `
-          <div class="action-item">
-            <div class="action-info">
-              <h4>${b.name} ${count > 0 ? `(У тебя: ${count})` : ''}</h4>
-              <p>Доход: <b style="color:var(--green)">+${b.income.toLocaleString()} ₽/год</b> · ${b.desc}</p>
+      if (p.age >= 18) {
+        html += `<div class="cat-title">🏪 Собственный Бизнес (Пассивный доход в месяц)</div>`;
+        bizCatalog.forEach(b => {
+          const count = p.businesses.filter(x => x.id === b.id).length;
+          const realProfit = Math.round(b.profit * city.salaryMult);
+          html += `
+            <div class="item-card">
+              <div class="item-thumb">${b.icon}</div>
+              <div class="item-body">
+                <h4>${b.name} ${count > 0 ? `(Сеть: ${count})` : ''}</h4>
+                <p>Прибыль: <b style="color:var(--green)">+${realProfit.toLocaleString()} ₽/мес</b> · ${b.desc}</p>
+              </div>
+              <button class="btn-act green" onclick="buyBusiness('${b.id}')">${b.price.toLocaleString()} ₽</button>
             </div>
-            <button class="act-btn green" onclick="buyBiz('${b.id}')">${b.price.toLocaleString()} ₽</button>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
+          `;
+        });
+      }
 
-    else if (activeTab === 'shop') {
-      let html = `<div class="section-title">🚗 Автосалон (Покупка в любое время)</div>`;
-      carsCatalog.forEach(c => {
-        const owned = p.cars.some(x => x.id === c.id);
-        html += `
-          <div class="action-item">
-            <div class="action-info">
-              <h4>${c.name} ${owned ? '✅' : ''}</h4>
-              <p>+${c.rep} Авторитета · Открывает работу в такси/бизнесе</p>
-            </div>
-            <button class="act-btn ${owned ? 'gold' : 'green'}" ${owned ? 'disabled' : ''} onclick="buyCar('${c.id}')">
-              ${owned ? 'В гараже' : c.price.toLocaleString() + ' ₽'}
-            </button>
-          </div>
-        `;
-      });
-
-      html += `<div class="section-title">🏠 Агентство недвижимости</div>`;
-      housesCatalog.forEach(h => {
-        const owned = p.houses.some(x => x.id === h.id);
-        html += `
-          <div class="action-item">
-            <div class="action-info">
-              <h4>${h.name} ${owned ? '✅' : ''}</h4>
-              <p>+${h.rep} Авторитета и статуса в городе</p>
-            </div>
-            <button class="act-btn ${owned ? 'gold' : 'green'}" ${owned ? 'disabled' : ''} onclick="buyHouse('${h.id}')">
-              ${owned ? 'Куплено' : h.price.toLocaleString() + ' ₽'}
-            </button>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    else if (activeTab === 'crime') {
-      let html = `<div class="section-title">🔫 Улица и Криминал (Розыск: ${p.wanted} ⭐)</div>`;
-      if (p.age < 12) {
-        html += `<div class="card"><p style="font-size:13px; color:var(--muted);">Криминальные дела доступны с 12 лет.</p></div>`;
+      // Сбалансированный криминал со снаряжением и лимитом 1 раз в ход
+      html += `<div class="cat-title">🔫 Криминал (Не чаще 1 дела за ход · Нужна подготовка)</div>`;
+      if (p.age < 14) {
+        html += `<div class="card"><p style="font-size:12px; color:var(--muted);">Криминальный мир доступен только с 14 лет.</p></div>`;
       } else {
-        html += `
-          <div class="action-item">
-            <div class="action-info"><h4>🕶 Украсть магнитолу / Скрутить номера</h4><p>Куш: 2 000 – 8 000 ₽ · Низкий риск</p></div>
-            <button class="act-btn red" onclick="doCrime('Мелкая кража', 5000, 0.8, 1)">Рискнуть</button>
-          </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🚘 Угнать иномарку на разборку</h4><p>Куш: 45 000 – 120 000 ₽ · Средний риск</p></div>
-            <button class="act-btn red" onclick="doCrime('Угон автомобиля', 85000, 0.65, 2)">Угнать</button>
-          </div>
-          <div class="action-item">
-            <div class="action-info"><h4>💼 Крышевание ларьков на районе</h4><p>Куш: 250 000 ₽ + 15 Авт · Высокий риск</p></div>
-            <button class="act-btn red" onclick="doCrime('Рэкет', 250000, 0.55, 3)">Собрать дань</button>
-          </div>
-          <div class="action-item">
-            <div class="action-info"><h4>🏦 Ограбление инкассаторов</h4><p>Куш: 2 500 000 ₽ · Огромный риск колонии</p></div>
-            <button class="act-btn red" onclick="doCrime('Ограбление инкассаторов', 2500000, 0.35, 5)">На дело</button>
-          </div>
-        `;
-      }
+        if (!p.tools.scanner || !p.tools.heistPlan) {
+          html += `
+            <div class="item-card">
+              <div class="item-thumb">🧰</div>
+              <div class="item-body">
+                <h4>Купить спец-оборудование на черном рынке</h4>
+                <p>${!p.tools.scanner ? 'Кодграббер для угона (180 000 ₽)' : 'План и броня для инкассации (850 000 ₽)'}</p>
+              </div>
+              <button class="btn-act purple" onclick="buyCrimeTool()">
+                ${!p.tools.scanner ? '180 000 ₽' : '850 000 ₽'}
+              </button>
+            </div>
+          `;
+        }
 
-      if (p.wanted > 0) {
-        const bribeCost = p.wanted * 15000;
         html += `
-          <div class="section-title">🚓 Решить вопрос с полицией</div>
-          <div class="action-item">
-            <div class="action-info"><h4>💵 Занести конверт следователю</h4><p>Полностью снимает все звезды розыска (${p.wanted} ⭐)</p></div>
-            <button class="act-btn gold" onclick="payBribe(${bribeCost})">${bribeCost.toLocaleString()} ₽</button>
+          <div class="item-card">
+            <div class="item-thumb">🕶️</div>
+            <div class="item-body"><h4>Мелкая кража магнитол / колес</h4><p>Доход: 12 000 – 30 000 ₽ · Шанс 65% · Срок 2 мес</p></div>
+            <button class="btn-act red" ${p.crimeDoneThisTurn ? 'disabled' : ''} onclick="commitCrime('Кража колес', 12000, 30000, 0.65, 2, false)">На дело</button>
+          </div>
+          <div class="item-card">
+            <div class="item-thumb">🚘</div>
+            <div class="item-body"><h4>Угон иномарки под разбор (Нужен Кодграббер)</h4><p>Доход: 160 000 – 320 000 ₽ · Шанс 45% · Срок 8 мес</p></div>
+            <button class="btn-act red" ${(!p.tools.scanner || p.crimeDoneThisTurn || p.age < 18) ? 'disabled' : ''} onclick="commitCrime('Угон иномарки', 160000, 320000, 0.45, 8, false)">Угнать</button>
+          </div>
+          <div class="item-card">
+            <div class="item-thumb">🏦</div>
+            <div class="item-body"><h4>Налёт на инкассацию (Нужен План и Ум 50+)</h4><p>Куш: 1.5 – 2.8 млн ₽ · Шанс 30% · Провал = тюрьма 18 мес + потеря брони</p></div>
+            <button class="btn-act red" ${(!p.tools.heistPlan || p.iq < 50 || p.crimeDoneThisTurn || p.age < 18) ? 'disabled' : ''} onclick="commitCrime('Ограбление инкассаторов', 1500000, 2800000, 0.30, 18, true)">Грабить</button>
           </div>
         `;
       }
-      container.innerHTML = html;
+      area.innerHTML = html;
     }
 
-    else if (activeTab === 'profile') {
-      let html = `
-        <div class="section-title">👨‍👩‍👦 Твоя Семья (г. ${p.family.city})</div>
-        <div class="card">
-          <div style="font-size:13px; margin-bottom:6px;">Тип семьи: <b>${p.family.type}</b></div>
-          <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Отношения с родителями: <b>${p.family.rel}%</b> · Карманные (до 18 л.): <b>${p.family.allowance} ₽/год</b></div>
-          <div style="display:flex; gap:8px;">
-            <button class="act-btn" style="flex:1;" onclick="askParentsMoney()">Попросить денег</button>
-            <button class="act-btn green" style="flex:1;" onclick="helpParents()">Помочь родителям (5к ₽)</button>
+    // ВКЛАДКА 3: АВТОСАЛОН И НЕДВИЖИМОСТЬ ТЕКУЩЕГО ГОРОДА
+    else if (currentTab === 'shop') {
+      const city = citiesCatalog[p.cityId];
+      let html = `<div class="cat-title">🚗 Автосалон (Доступно с 18 лет)</div>`;
+      carsCatalog.forEach(c => {
+        const has = p.cars.some(x => x.id === c.id);
+        html += `
+          <div class="item-card">
+            <div class="item-thumb">${c.icon}</div>
+            <div class="item-body">
+              <h4>${c.name} ${has ? '✅' : ''}</h4>
+              <p>+${c.rep} Авторитета · ${c.desc}</p>
+            </div>
+            <button class="btn-act ${has ? 'gold' : 'green'}" ${(has || p.age < 18) ? 'disabled' : ''} onclick="buyCar('${c.id}')">
+              ${has ? 'В гараже' : c.price.toLocaleString() + ' ₽'}
+            </button>
           </div>
-        </div>
+        `;
+      });
 
-        <div class="section-title">🚗 Твой Гараж (${p.cars.length}) и Жилье (${p.houses.length})</div>
+      html += `<div class="cat-title">🏠 Недвижимость в г. ${city.name}</div>`;
+      city.houses.forEach(h => {
+        const isCurrent = p.currentHouse && p.currentHouse.id === h.id;
+        html += `
+          <div class="item-card">
+            <div class="item-thumb">${h.icon}</div>
+            <div class="item-body">
+              <h4>${h.name} ${isCurrent ? '🔑 (Живешь тут)' : ''}</h4>
+              <p>${h.type === 'rent' ? `Аренда: ${h.rent.toLocaleString()} ₽/мес` : `Покупка · Кварплата ${h.rent.toLocaleString()} ₽/мес`} · +${h.rep} Авт</p>
+            </div>
+            <button class="btn-act ${isCurrent ? 'gold' : 'green'}" ${(isCurrent || p.age < 18) ? 'disabled' : ''} onclick="acquireHouseInCurrentCity('${h.id}')">
+              ${isCurrent ? 'Твой дом' : (h.type === 'rent' ? 'Снять' : h.price.toLocaleString() + ' ₽')}
+            </button>
+          </div>
+        `;
+      });
+      area.innerHTML = html;
+    }
+
+    // ВКЛАДКА 4: ПЕРЕЕЗД В ДРУГОЙ ГОРОД ИЛИ СТРАНУ (С обязательным выбором жилья!)
+    else if (currentTab === 'move') {
+      let html = `
+        <div class="card">
+          <h4 style="font-size:13px; margin-bottom:4px;">✈️ Переезд в другой город или страну</h4>
+          <p style="font-size:11px; color:var(--muted);">
+            Для переезда тебе должно быть <b>18+ лет</b>. При переезде ты сразу выбираешь квартиру или дом в новом городе (в аренду или покупку), а код региона на твоих автономерах сменится!
+          </p>
+        </div>
       `;
 
-      if (p.cars.length === 0 && p.houses.length === 0) {
-        html += `<div class="card"><p style="font-size:12px; color:var(--muted);">У тебя пока нет личного транспорта или недвижимости. Загляни во вкладку «Магазин»!</p></div>`;
-      } else {
-        p.cars.forEach((c, idx) => {
-          const sellPrice = Math.floor(c.price * 0.75);
-          html += `
-            <div class="action-item">
-              <div class="action-info"><h4>🚗 ${c.name}</h4><p>Можно продать перекупам за 75% цены</p></div>
-              <button class="act-btn gold" onclick="sellCar(${idx}, ${sellPrice})">Продать +${sellPrice.toLocaleString()} ₽</button>
+      Object.values(citiesCatalog).forEach(c => {
+        const isHere = p.cityId === c.id;
+        html += `<div class="cat-title">${c.name} (${c.country}) · Регион [${c.regCode}] · Доходы x${c.salaryMult}</div>`;
+        if (isHere) {
+          html += `<div class="card" style="padding:8px 12px; font-size:12px; color:var(--green);">✅ Ты сейчас проживаешь в этом городе.</div>`;
+        } else {
+          c.houses.forEach(h => {
+            const totalMoveCost = c.moveFee + (h.type === 'buy' ? h.price : h.rent);
+            html += `
+              <div class="item-card">
+                <div class="item-thumb">${h.icon}</div>
+                <div class="item-body">
+                  <h4>Переезд + ${h.name}</h4>
+                  <p>Билеты/виза: ${c.moveFee.toLocaleString()} ₽ + ${h.type === 'rent' ? '1-й мес аренды ' + h.rent.toLocaleString() + ' ₽' : 'Покупка жилья'}</p>
+                </div>
+                <button class="btn-act purple" ${p.age < 18 ? 'disabled' : ''} onclick="relocateToCity('${c.id}', '${h.id}')">
+                  ${totalMoveCost.toLocaleString()} ₽
+                </button>
+              </div>
+            `;
+          });
+        }
+      });
+      area.innerHTML = html;
+    }
+
+    // ВКЛАДКА 5: РАНДОМАЙЗЕР АВТОНОМЕРОВ (ГИБДД) И ТЕЛЕФОННЫХ SIM-КАРТ
+    else if (currentTab === 'plates') {
+      const city = citiesCatalog[p.cityId];
+      let curPlateHtml = p.activePlate
+        ? renderPlateWidget(p.activePlate.text, p.activePlate.reg, p.activePlate.flag)
+        : `<span style="font-size:12px; color:var(--muted);">Нет установленного номера</span>`;
+
+      let html = `
+        <div class="cat-title">🚗 Рандомайзер Автономеров (Регион г. ${city.name}: ${city.regCode})</div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">Текущий номер на твоем авто:</div>
+          <div>${curPlateHtml}</div>
+          ${p.activePlate ? `<div style="margin-top:4px;"><span class="rarity-tag ${p.activePlate.rClass}">${p.activePlate.rTitle} (+${p.activePlate.rep} Авт)</span></div>` : ''}
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn-act" style="flex:1; padding:10px;" ${p.cars.length === 0 ? 'disabled' : ''} onclick="rollLicensePlate(false)">
+              🎲 Обычный (5 000 ₽)
+            </button>
+            <button class="btn-act gold" style="flex:1; padding:10px;" ${p.cars.length === 0 ? 'disabled' : ''} onclick="rollLicensePlate(true)">
+              💎 Спецсерия (75 000 ₽)
+            </button>
+          </div>
+          ${p.cars.length === 0 ? `<p style="font-size:11px; color:var(--red); margin-top:6px;">Сначала купи любой автомобиль во вкладке «Авто/Дом»!</p>` : ''}
+        </div>
+
+        <div class="cat-title">📱 Салон Связи — Рандомайзер Красивых SIM-карт</div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:11px; color:var(--muted);">Твой номер телефона:</div>
+          <div style="font-size:17px; font-weight:900; margin:6px 0; color:#93c5fd;">
+            ${p.phone ? p.phone.num : 'Нет SIM-карты'}
+          </div>
+          ${p.phone ? `<div><span class="rarity-tag ${p.phone.rClass}">${p.phone.rTitle} (+${p.phone.rep} Авт)</span></div>` : ''}
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button class="btn-act" style="flex:1; padding:10px;" onclick="rollPhoneNumber(false)">
+              🎲 Крутить SIM (1 500 ₽)
+            </button>
+            <button class="btn-act purple" style="flex:1; padding:10px;" onclick="rollPhoneNumber(true)">
+              👑 VIP-номер (35 000 ₽)
+            </button>
+          </div>
+        </div>
+      `;
+      area.innerHTML = html;
+    }
+
+    // ВКЛАДКА 6: СЕМЬЯ (Родители, Вторая половинка, Свадьба, Дети)
+    else if (currentTab === 'family') {
+      const partnerTitle = p.gender === 'M'
+        ? (p.partner?.married ? 'Жена' : 'Девушка')
+        : (p.partner?.married ? 'Муж' : 'Парень');
+
+      let html = `
+        <div class="cat-title">👨‍👩‍👦 Родительский дом</div>
+        <div class="item-card">
+          <div class="item-thumb">🏡</div>
+          <div class="item-body">
+            <h4>${p.family.title}</h4>
+            <p>Отношения: <b>${p.family.rel}%</b> · Помощь и общение с семьей</p>
+          </div>
+          <button class="btn-act green" onclick="visitParents()">Навестить</button>
+        </div>
+
+        <div class="cat-title">❤️ Личная жизнь и Отношения (С 14 лет)</div>
+      `;
+
+      if (p.age < 14) {
+        html += `<div class="card"><p style="font-size:12px; color:var(--muted);">Заводить романтические отношения можно с 14 лет.</p></div>`;
+      } else if (!p.partner) {
+        html += `
+          <div class="item-card">
+            <div class="item-thumb">💘</div>
+            <div class="item-body">
+              <h4>Познакомиться (${p.gender === 'M' ? 'Найти девушку' : 'Найти парня'})</h4>
+              <p>В парке, кафе или через общих друзей (-20 ⚡)</p>
             </div>
-          `;
-        });
-        p.houses.forEach((h, idx) => {
-          const sellPrice = Math.floor(h.price * 0.85);
+            <button class="btn-act purple" onclick="findPartner()">Познакомиться</button>
+          </div>
+        `;
+      } else {
+        const canMarry = p.age >= 18 && !p.partner.married && p.partner.rel >= 80 && !p.livingWithParents;
+        html += `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div>
+                <h4 style="font-size:15px;">${p.partner.icon} ${partnerTitle}: ${p.partner.name}</h4>
+                <p style="font-size:11px; color:var(--muted);">Любовь и доверие: <b>${p.partner.rel}%</b></p>
+              </div>
+              <button class="btn-act red" onclick="breakUp()">Расстаться</button>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn-act" style="flex:1;" onclick="datePartner()">🌹 Свидание (3 000 ₽)</button>
+              <button class="btn-act gold" style="flex:1;" onclick="giftPartner()">🎁 Подарок (25 000 ₽)</button>
+            </div>
+            ${!p.partner.married ? `
+              <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border);">
+                <button class="btn-act purple" style="width:100%; padding:10px;" ${!canMarry ? 'disabled' : ''} onclick="marryPartner()">
+                  💍 Сыграть свадьбу (150 000 ₽)
+                </button>
+                ${!canMarry ? `<p style="font-size:10.5px; color:var(--muted); margin-top:4px;">Для свадьбы нужно: 18+ лет, Любовь 80%+ и отдельное жилье (съемное или свое).</p>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+
+      // Дети (доступны в браке)
+      if (p.partner && p.partner.married) {
+        html += `<div class="cat-title">👶 Дети (${p.children.length})</div>`;
+        html += `
+          <div class="item-card">
+            <div class="item-thumb">🍼</div>
+            <div class="item-body">
+              <h4>Завести ребенка</h4>
+              <p>Продолжение рода (+35 Авторитета, расходы 15 000 ₽/мес)</p>
+            </div>
+            <button class="btn-act green" onclick="haveChild()">Родить ребенка</button>
+          </div>
+        `;
+        p.children.forEach(ch => {
+          const chYears = Math.floor(ch.ageMonths / 12);
           html += `
-            <div class="action-item">
-              <div class="action-info"><h4>🏠 ${h.name}</h4><p>Продажа по рыночной стоимости (85%)</p></div>
-              <button class="act-btn gold" onclick="sellHouse(${idx}, ${sellPrice})">Продать +${sellPrice.toLocaleString()} ₽</button>
+            <div class="item-card">
+              <div class="item-thumb">🧒</div>
+              <div class="item-body">
+                <h4>${ch.name} (${chYears} л. ${ch.ageMonths % 12} мес.)</h4>
+                <p>Твой ребенок радует всю семью</p>
+              </div>
+              <button class="btn-act" onclick="paidAction(5000, 15, () => { p.rep += 3; addLog('Купил игрушки ребенку (+3 Авт).'); })">Подарок 5к ₽</button>
             </div>
           `;
         });
       }
-      container.innerHTML = html;
+
+      area.innerHTML = html;
     }
   }
 
-  // Механика действий
-  function doAct(enCost, callback) {
-    if (p.en < enCost) {
-      haptic('warning');
-      log('⚠️ Не хватает бодрости! Перекуси шаурмой или подожди пару секунд.');
-      return;
-    }
+  // ВИДЖЕТ ГОСНОМЕРА
+  function renderPlateWidget(text, reg, flag) {
+    return `
+      <div class="plate-wrap">
+        <div class="plate-main">${text}</div>
+        <div class="plate-region">
+          <span class="plate-reg-num">${reg}</span>
+          <span class="plate-flag">${flag}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // ФУНКЦИИ ДЕЙСТВИЙ
+  function eatFood(cost, enGain, hpGain, msg) {
+    if (p.money < cost) { addLog('❌ Не хватает денег на еду!'); return; }
+    haptic('light');
+    p.money -= cost;
+    p.en = Math.min(100, p.en + enGain);
+    p.hp = Math.min(100, p.hp + hpGain);
+    if (cost >= 25000) p.rep += 3;
+    addLog(`🍽️ ${msg} (+${enGain} ⚡)`);
+    refreshAllUI();
+  }
+
+  function useEnergy(enCost, fn) {
+    if (p.en < enCost) { addLog('⚠️ Ты устал! Поешь во вкладке «Жизнь» или нажми кнопку следующего хода.'); return; }
     haptic('light');
     p.en -= enCost;
-    callback();
-    updateHeaderUI();
+    fn();
+    refreshAllUI();
   }
 
-  function quickEat(cost) {
-    if (p.money < cost) { log('❌ Не хватает денег на перекус!'); return; }
+  function paidAction(cost, enCost, fn) {
+    if (p.money < cost) { addLog(`❌ Недостаточно денег (нужно ${cost.toLocaleString()} ₽)!`); return; }
+    if (p.en < enCost) { addLog('⚠️ Не хватает бодрости! Подкрепись едой.'); return; }
     haptic('light');
     p.money -= cost;
-    p.en = Math.min(100, p.en + 35);
-    p.hp = Math.min(100, p.hp + 5);
-    log('🌯 Ты плотно перекусил (+35 Бодрости).');
-    updateHeaderUI();
+    p.en -= enCost;
+    fn();
+    refreshAllUI();
   }
 
-  function healClinic(cost) {
-    if (p.money < cost) { log('❌ Недостаточно средств на клинику!'); return; }
+  function prisonAct(enCost, fn) {
+    if (p.en < enCost) { addLog('⚠️ Нет сил! Съешь тюремную пайку или нажми «Отбыть 1 мес.».'); return; }
+    haptic('light');
+    p.en -= enCost;
+    fn();
+    refreshAllUI();
+  }
+
+  function payParole(cost) {
+    if (p.money < cost) { addLog(`❌ У тебя нет ${cost.toLocaleString()} ₽ на услуги адвоката по УДО!`); return; }
     haptic('medium');
     p.money -= cost;
-    p.hp = Math.min(100, p.hp + 40);
-    log('🏥 Врачи поправили твое здоровье (+40 ❤️).');
-    updateHeaderUI();
+    p.jailMonths = 0;
+    addLog(`⚖️ Адвокат добился УДО! Ты на свободе.`);
+    refreshAllUI();
   }
 
-  function studyAdult() {
-    if (p.money < 5000 || p.en < 25) { log('❌ Нужно 5 000 ₽ и 25 Бодрости!'); return; }
-    haptic('light');
-    p.money -= 5000;
-    p.en -= 25;
-    p.iq = Math.min(100, p.iq + 6);
-    log('🎓 Ты прошел курсы повышения квалификации (+6 Ума).');
-    updateHeaderUI();
-  }
-
-  function gymAdult() {
-    if (p.money < 1500 || p.en < 25) { log('❌ Нужно 1 500 ₽ и 25 Бодрости!'); return; }
-    haptic('light');
-    p.money -= 1500;
-    p.en -= 25;
-    p.hp = Math.min(100, p.hp + 8);
-    p.rep += 3;
-    log('🏋️‍♂️ Отличная тренировка в зале (+8 Здоровья, +3 Авт).');
-    updateHeaderUI();
-  }
-
-  function playCasino(bet) {
-    if (p.money < bet) { log('❌ Нет 10 000 ₽ для ставки в казино!'); return; }
+  // КАРЬЕРА И КРИМИНАЛ
+  function hireJob(id) {
+    const j = jobsCatalog.find(x => x.id === id);
+    if (!j) return;
     haptic('medium');
-    if (Math.random() < 0.48) {
-      p.money += bet;
-      log(`🎰 ДЖЕКПОТ! Ты поднял +${bet.toLocaleString()} ₽ на рулетке!`);
-    } else {
-      p.money -= bet;
-      log(`🎰 Ставка не сыграла. Проиграно ${bet.toLocaleString()} ₽.`);
-    }
-    updateHeaderUI();
+    p.job = j;
+    addLog(`💼 Ты устроился на должность: ${j.name}!`);
+    refreshAllUI();
   }
 
-  // Работа и Бизнес
-  function takeJob(id) {
-    const job = jobsCatalog.find(j => j.id === id);
-    if (!job) return;
-    haptic('medium');
-    p.job = job;
-    log(`💼 Ты устроился на работу: ${job.name} (${job.salary.toLocaleString()} ₽/год)!`);
-    renderActiveTab();
-    updateHeaderUI();
-  }
-
-  function buyBiz(id) {
+  function buyBusiness(id) {
     const b = bizCatalog.find(x => x.id === id);
-    if (p.money < b.price) { log(`❌ Нужно ${b.price.toLocaleString()} ₽ для покупки бизнеса!`); return; }
+    if (p.money < b.price) { addLog(`❌ Для открытия «${b.name}» нужно ${b.price.toLocaleString()} ₽!`); return; }
     haptic('medium');
     p.money -= b.price;
     p.businesses.push(b);
-    p.rep += 15;
-    log(`🏪 Ты открыл бизнес «${b.name}»! Пассивный доход вырос.`);
-    renderActiveTab();
-    updateHeaderUI();
+    p.rep += 25;
+    addLog(`🏪 Открыт новый бизнес: «${b.name}»!`);
+    refreshAllUI();
   }
 
-  // Покупка и продажа имущества
+  function buyCrimeTool() {
+    if (!p.tools.scanner) {
+      if (p.money < 180000) { addLog('❌ Нужно 180 000 ₽ на сканер-кодграббер!'); return; }
+      p.money -= 180000;
+      p.tools.scanner = true;
+      addLog('🧰 Куплен Кодграббер! Теперь доступен угон иномарок.');
+    } else if (!p.tools.heistPlan) {
+      if (p.money < 850000) { addLog('❌ Нужно 850 000 ₽ на план инкассации и броню!'); return; }
+      p.money -= 850000;
+      p.tools.heistPlan = true;
+      addLog('🧰 Куплена экипировка и маршрут инкассаторов!');
+    }
+    refreshAllUI();
+  }
+
+  function commitCrime(title, minReward, maxReward, chance, jailSentence, loseHeistGear) {
+    if (p.crimeDoneThisTurn) { addLog('⚠️ В этом месяце ты уже ходил на дело! Слишком много полиции на улицах.'); return; }
+    if (p.en < 40) { addLog('⚠️ Для криминального дела нужно минимум 40 ⚡ Бодрости!'); return; }
+    haptic('medium');
+    p.en -= 40;
+    p.crimeDoneThisTurn = true;
+
+    if (Math.random() < chance) {
+      const loot = Math.floor(minReward + Math.random() * (maxReward - minReward));
+      p.money += loot;
+      p.rep += 10;
+      addLog(`🔫 УСПЕХ (${title})! Твоя доля составила +${loot.toLocaleString()} ₽.`);
+    } else {
+      p.jailMonths = jailSentence;
+      p.job = null;
+      if (loseHeistGear) p.tools.heistPlan = false;
+      const fine = Math.min(Math.floor(p.money * 0.25), 500000);
+      p.money -= fine;
+      addLog(`🚓 ЗАДЕРЖАНИЕ! Суд назначил ${jailSentence} мес. колонии и штраф ${fine.toLocaleString()} ₽.`);
+    }
+    refreshAllUI();
+  }
+
+  // ПОКУПКА АВТО, ЖИЛЬЯ И ПЕРЕЕЗДЫ
   function buyCar(id) {
     const c = carsCatalog.find(x => x.id === id);
-    if (p.money < c.price) { log(`❌ Не хватает денег на ${c.name}!`); return; }
+    if (p.money < c.price) { addLog(`❌ Не хватает денег на ${c.name}!`); return; }
     haptic('medium');
     p.money -= c.price;
     p.cars.push(c);
     p.rep += c.rep;
-    log(`🚗 Поздравляем с покупкой ${c.name}! (+${c.rep} Авт)`);
-    renderActiveTab();
-    updateHeaderUI();
+    if (!p.activePlate) generatePlateObject(false);
+    addLog(`🚗 Ты купил ${c.name}! (+${c.rep} Авт)`);
+    refreshAllUI();
   }
 
-  function buyHouse(id) {
-    const h = housesCatalog.find(x => x.id === id);
-    if (p.money < h.price) { log(`❌ Не хватает денег на ${h.name}!`); return; }
+  function acquireHouseInCurrentCity(houseId) {
+    const city = citiesCatalog[p.cityId];
+    const h = city.houses.find(x => x.id === houseId);
+    const cost = h.type === 'buy' ? h.price : h.rent;
+    if (p.money < cost) { addLog(`❌ Нужно ${cost.toLocaleString()} ₽ для заселения!`); return; }
     haptic('medium');
-    p.money -= h.price;
-    p.houses.push(h);
-    p.rep += h.rep;
-    log(`🏠 Ты купил недвижимость: ${h.name}! (+${h.rep} Авт)`);
-    renderActiveTab();
-    updateHeaderUI();
-  }
-
-  function sellCar(idx, price) {
-    const car = p.cars.splice(idx, 1)[0];
-    p.money += price;
-    log(`💵 Ты продал ${car.name} за ${price.toLocaleString()} ₽.`);
-    renderActiveTab();
-    updateHeaderUI();
-  }
-
-  function sellHouse(idx, price) {
-    const house = p.houses.splice(idx, 1)[0];
-    p.money += price;
-    log(`💵 Ты продал ${house.name} за ${price.toLocaleString()} ₽.`);
-    renderActiveTab();
-    updateHeaderUI();
-  }
-
-  // Криминал
-  function doCrime(title, reward, chance, stars) {
-    if (p.en < 25) { log('⚠️ Нужно 25 Бодрости для криминала!'); return; }
-    p.en -= 25;
-    haptic('medium');
-
-    if (Math.random() < chance) {
-      const cash = Math.floor(reward * (0.7 + Math.random() * 0.6));
-      p.money += cash;
-      p.rep += stars * 5;
-      p.wanted = Math.min(5, p.wanted + 1);
-      log(`🔫 Успех (${title})! Добыча: +${cash.toLocaleString()} ₽.`);
-    } else {
-      p.wanted = Math.min(5, p.wanted + stars);
-      if (p.wanted >= 3) {
-        const years = 2 + stars;
-        p.jailYears = years;
-        p.wanted = 0;
-        p.job = null;
-        log(`🚓 ПРОВАЛ! Тебя задержал ОМОН. Суд назначил ${years} г. колонии.`);
-      } else {
-        p.hp -= 15;
-        log(`🚓 Дело сорвалось! Ты еле ушел дворами (-15 ❤️, +Розыск).`);
-      }
-    }
-    renderActiveTab();
-    updateHeaderUI();
-  }
-
-  function payBribe(cost) {
-    if (p.money < cost) { log('❌ Не хватает денег на взятку!'); return; }
     p.money -= cost;
-    p.wanted = 0;
-    log('🤝 Вопрос решен. Твое дело закрыто, розыск снят.');
-    renderActiveTab();
-    updateHeaderUI();
+    p.livingWithParents = false;
+    p.currentHouse = h;
+    p.rep += h.rep;
+    addLog(`🔑 Ты переехал в «${h.name}» (г. ${city.name})!`);
+    refreshAllUI();
   }
 
-  // Семья
-  function askParentsMoney() {
-    if (p.en < 15) { log('⚠️ Мало бодрости!'); return; }
-    p.en -= 15;
-    if (p.family.rel >= 50) {
-      const gift = p.family.allowance * 2;
-      p.money += gift;
-      p.family.rel -= 5;
-      log(`👨‍👩‍👦 Родители перевели тебе ${gift.toLocaleString()} ₽ на расходы.`);
+  function relocateToCity(targetCityId, targetHouseId) {
+    const city = citiesCatalog[targetCityId];
+    const h = city.houses.find(x => x.id === targetHouseId);
+    const totalCost = city.moveFee + (h.type === 'buy' ? h.price : h.rent);
+
+    if (p.money < totalCost) {
+      addLog(`❌ Для переезда в г. ${city.name} с жильем «${h.name}» нужно ${totalCost.toLocaleString()} ₽!`);
+      return;
+    }
+    haptic('medium');
+    p.money -= totalCost;
+    p.cityId = targetCityId;
+    p.livingWithParents = false;
+    p.currentHouse = h;
+    p.rep += h.rep + 15;
+
+    // Обновляем регион на автономере под новый город
+    if (p.activePlate) {
+      p.activePlate.reg = city.regCode;
+      p.activePlate.flag = city.flag;
+    }
+
+    addLog(`✈️ ПЕРЕЕЗД! Ты переехал в г. ${city.name} (${city.country}) и заселился в «${h.name}»!`);
+    refreshAllUI();
+  }
+
+  // РАНДОМАЙЗЕР АВТОНОМЕРОВ И SIM-КАРТ
+  function generatePlateObject(isVip) {
+    const city = citiesCatalog[p.cityId];
+    const letters = ['А', 'В', 'Е', 'К', 'М', 'Н', 'О', 'Р', 'С', 'Т', 'У', 'Х'];
+    const r = Math.random();
+
+    let l1 = letters[Math.floor(Math.random() * letters.length)];
+    let l2 = letters[Math.floor(Math.random() * letters.length)];
+    let l3 = letters[Math.floor(Math.random() * letters.length)];
+    let digits = String(Math.floor(100 + Math.random() * 899));
+    let rTitle = 'Обычный';
+    let rClass = 'r-common';
+    let repBonus = 2;
+
+    if ((isVip && r < 0.35) || (!isVip && r < 0.03)) {
+      // Абсолютный Блатной (А 777 АА, О 001 ОО, Е 999 КХ)
+      const vipCombos = ['А 777 АА', 'О 001 ОО', 'Х 666 ХХ', 'Е 999 КХ', 'В 888 ВВ', 'М 007 ММ'];
+      const picked = vipCombos[Math.floor(Math.random() * vipCombos.length)];
+      p.activePlate = { text: picked, reg: city.regCode, flag: city.flag, rTitle: 'Блатной Абсолют', rClass: 'r-mythic', rep: 85 };
+      p.rep += 85;
+      return;
+    } else if ((isVip && r < 0.75) || (!isVip && r < 0.15)) {
+      // Три одинаковые цифры (777, 999, 001, 555)
+      const niceDigits = ['777', '999', '001', '555', '888', '111', '007'];
+      digits = niceDigits[Math.floor(Math.random() * niceDigits.length)];
+      rTitle = 'Три семерки / Элита';
+      rClass = 'r-legend';
+      repBonus = 35;
+    } else if (r < 0.45) {
+      // Зеркальный номер (505, 717, 282)
+      const d1 = Math.floor(1 + Math.random() * 8);
+      const d2 = Math.floor(Math.random() * 9);
+      digits = `${d1}${d2}${d1}`;
+      rTitle = 'Зеркальный';
+      rClass = 'r-rare';
+      repBonus = 12;
+    }
+
+    p.activePlate = { text: `${l1} ${digits} ${l2}${l3}`, reg: city.regCode, flag: city.flag, rTitle, rClass, rep: repBonus };
+    p.rep += repBonus;
+  }
+
+  function rollLicensePlate(isVip) {
+    const cost = isVip ? 75000 : 5000;
+    if (p.money < cost) { addLog(`❌ Не хватает ${cost.toLocaleString()} ₽ на пошлину ГИБДД!`); return; }
+    haptic('medium');
+    p.money -= cost;
+    generatePlateObject(isVip);
+    addLog(`🎰 Выбит номер [${p.activePlate.text} | ${p.activePlate.reg}] — ${p.activePlate.rTitle}!`);
+    refreshAllUI();
+  }
+
+  function rollPhoneNumber(isVip) {
+    const cost = isVip ? 35000 : 1500;
+    if (p.money < cost) { addLog(`❌ Не хватает ${cost.toLocaleString()} ₽ на SIM-карту!`); return; }
+    haptic('medium');
+    p.money -= cost;
+
+    const r = Math.random();
+    let num = '';
+    let rTitle = 'Обычный';
+    let rClass = 'r-common';
+    let repBonus = 2;
+
+    if ((isVip && r < 0.4) || (!isVip && r < 0.04)) {
+      const goldNums = ['+7 (999) 777-77-77', '+7 (900) 000-00-01', '+7 (999) 888-88-88', '+7 (977) 777-00-00'];
+      num = goldNums[Math.floor(Math.random() * goldNums.length)];
+      rTitle = 'Платиновый VIP';
+      rClass = 'r-mythic';
+      repBonus = 50;
+    } else if ((isVip && r < 0.85) || (!isVip && r < 0.2)) {
+      const d = Math.floor(1 + Math.random() * 8);
+      num = `+7 (999) ${d}00-0${d}-0${d}`;
+      rTitle = 'Золотой номер';
+      rClass = 'r-legend';
+      repBonus = 20;
     } else {
-      log(`👨‍👩‍👦 Родители отказали: «Хватит сидеть у нас на шее!»`);
+      const p1 = Math.floor(100 + Math.random() * 899);
+      const p2 = Math.floor(10 + Math.random() * 89);
+      const p3 = Math.floor(10 + Math.random() * 89);
+      num = `+7 (927) ${p1}-${p2}-${p3}`;
     }
-    renderActiveTab();
-    updateHeaderUI();
+
+    p.phone = { num, rTitle, rClass, rep: repBonus };
+    p.rep += repBonus;
+    addLog(`📱 Новая SIM-карта: ${num} (${rTitle})!`);
+    refreshAllUI();
   }
 
-  function helpParents() {
-    if (p.money < 5000) { log('❌ Нужно 5 000 ₽ на подарок родителям!'); return; }
-    p.money -= 5000;
-    p.family.rel = Math.min(100, p.family.rel + 15);
-    p.rep += 5;
-    log('❤️ Ты купил подарки и продукты родителям! Отношения улучшились.');
-    renderActiveTab();
-  }
-
-  // Случайные интерактивные события (ставят таймер на паузу)
-  const randomEventsPool = [
-    {
-      title: 'Находка в старом гараже',
-      desc: 'Разбирая хлам у соседа, ты наткнулся на запечатанную коробку с советским антиквариатом.',
-      choices: [
-        { text: 'Продать коллекционеру (+15 000 ₽)', fn: () => { p.money += 15000; log('Продал находку за 15 000 ₽!'); } },
-        { text: 'Вернуть соседу (+10 Авторитета)', fn: () => { p.rep += 10; log('Сосед отблагодарил тебя и всем рассказал о твоей честности.'); } }
-      ]
-    },
-    {
-      title: 'Предложение от старого друга',
-      desc: 'Одноклассник зовет вложиться в партию кроссовок из Китая для перепродажи (нужно 10 000 ₽).',
-      choices: [
-        { text: 'Вложиться (Риск 50/50 на +35 000 ₽)', fn: () => {
-          if (p.money < 10000) { log('Не хватило денег для вложения.'); return; }
-          p.money -= 10000;
-          if (Math.random() < 0.6) { p.money += 35000; log('Партия разлетелась! Прибыль +35 000 ₽.'); }
-          else { log('Товар застрял на таможне. Деньги сгорели.'); }
-        }},
-        { text: 'Отказаться от мутной темы', fn: () => { log('Ты решил поберечь свои сбережения.'); } }
-      ]
-    },
-    {
-      title: 'Дорожный конфликт',
-      desc: 'На парковке у ТЦ мажор задел тебя плечом и начал качать права при толпе.',
-      choices: [
-        { text: 'Ответить жестко (+12 Авт, -10 Здоровья)', fn: () => { p.rep += 12; p.hp -= 10; log('Ты постоял за себя! Уважение на районе выросло.'); } },
-        { text: 'Решить словами (Ум +3)', fn: () => { p.iq += 3; log('Ты грамотно разрулил конфликт без драки.'); } }
-      ]
-    }
-  ];
-
-  function triggerRandomEvent() {
-    savedSpeedBeforeModal = speedMultiplier;
-    setSpeed(0); // Пауза пока игрок выбирает
-
-    const ev = randomEventsPool[Math.floor(Math.random() * randomEventsPool.length)];
-    document.getElementById('ev-title').innerText = ev.title;
-    document.getElementById('ev-desc').innerText = ev.desc;
-
-    const box = document.getElementById('ev-choices');
-    box.innerHTML = '';
-    ev.choices.forEach(ch => {
-      const btn = document.createElement('button');
-      btn.className = 'modal-choice';
-      btn.innerText = ch.text;
-      btn.onclick = () => {
-        haptic('light');
-        ch.fn();
-        document.getElementById('event-modal').style.display = 'none';
-        setSpeed(savedSpeedBeforeModal || 1);
-        updateHeaderUI();
-      };
-      box.appendChild(btn);
+  // СЕМЬЯ, СВАДЬБА И ДЕТИ
+  function visitParents() {
+    useEnergy(15, () => {
+      p.family.rel = Math.min(100, p.family.rel + 8);
+      p.hp = Math.min(100, p.hp + 5);
+      addLog('👨‍👩‍👦 Ты душевно посидел с родителями за чаем (+8% отношений).');
     });
-
-    document.getElementById('event-modal').style.display = 'flex';
   }
 
-  function die(reason) {
-    p.alive = false;
-    clearInterval(loopInterval);
-    haptic('heavy');
-
-    const totalMoney = Math.floor(p.money);
-    meta.lives += 1;
-    if (totalMoney > meta.recordMoney) meta.recordMoney = totalMoney;
-    localStorage.setItem('crmp_life_meta', JSON.stringify(meta));
-
-    document.getElementById('screen-game').style.display = 'none';
-    document.getElementById('screen-end').style.display = 'block';
-
-    document.getElementById('end-reason').innerText = `${reason} (${p.age} лет)`;
-    document.getElementById('end-name').innerText = `${p.name} (г. ${p.family.city})`;
-    document.getElementById('end-family').innerText = p.family.type;
-    document.getElementById('end-age').innerText = `${p.age} лет`;
-    document.getElementById('end-money').innerText = `${totalMoney.toLocaleString()} ₽`;
-    document.getElementById('end-assets').innerText = `${p.cars.length} авто, ${p.houses.length} жилья, ${p.businesses.length} бизнесов`;
-    document.getElementById('end-rep').innerText = p.rep;
+  function findPartner() {
+    useEnergy(20, () => {
+      const pool = p.gender === 'M' ? femaleNames : maleNames;
+      const pName = pool[Math.floor(Math.random() * pool.length)];
+      p.partner = {
+        name: pName,
+        rel: 45,
+        married: false,
+        icon: p.gender === 'M' ? '👩' : '👨'
+      };
+      addLog(`💘 Ты познакомился с ${pName}! Начались романтические отношения.`);
+    });
   }
 
-  function backToMenu() {
-    updateMetaUI();
-    document.getElementById('screen-end').style.display = 'none';
-    document.getElementById('screen-start').style.display = 'block';
+  function datePartner() {
+    paidAction(3000, 20, () => {
+      p.partner.rel = Math.min(100, p.partner.rel + 15);
+      addLog(`🌹 Отличное свидание с ${p.partner.name} (+15% любви)!`);
+    });
+  }
+
+  function giftPartner() {
+    paidAction(25000, 10, () => {
+      p.partner.rel = Math.min(100, p.partner.rel + 30);
+      p.rep += 5;
+      addLog(`🎁 Ты подарил ювелирное украшение ${p.partner.name} (+30% любви)!`);
+    });
+  }
+
+  function marryPartner() {
+    if (p.money < 150000) { addLog('❌ На организацию свадьбы нужно 150 000 ₽!'); return; }
+    haptic('medium');
+    p.money -= 150000;
+    p.partner.married = true;
+    p.partner.rel = 100;
+    p.rep += 30;
+    addLog(`💍 СВАДЬБА! Ты и ${p.partner.name} официально стали семьей!`);
+    refreshAllUI();
+  }
+
+  function breakUp() {
+    haptic('light');
+    addLog(`💔 Ты расстался с ${p.partner.name}.`);
+    p.partner = null;
+    refreshAllUI();
+  }
+
+  function haveChild() {
+    if (p.children.length >= 4) { addLog('У вас уже большая многодетная семья!'); return; }
+    haptic('medium');
+    const allNames = [...maleNames, ...femaleNames];
+    const chName = allNames[Math.floor(Math.random() * allNames.length)];
+    p.children.push({ name: chName, ageMonths: 0 });
+    p.rep += 35;
+    addLog(`👶 В вашей семье пополнение! Родился ребенок: ${chName}!`);
+    refreshAllUI();
   }
 </script>
 </body>
